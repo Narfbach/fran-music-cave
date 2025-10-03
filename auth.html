@@ -187,6 +187,8 @@
                 window.location.href = 'index.html';
             } catch (error) {
                 console.error('Registration error:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
 
                 if (error.code === 'auth/email-already-in-use') {
                     showError('Email already in use');
@@ -194,8 +196,10 @@
                     showError('Invalid email address');
                 } else if (error.code === 'auth/weak-password') {
                     showError('Password is too weak');
+                } else if (error.code === 'permission-denied') {
+                    showError('Database permission error. Please contact admin.');
                 } else {
-                    showError('Registration failed. Try again.');
+                    showError(`Registration failed: ${error.message || 'Try again'}`);
                 }
             }
         }
