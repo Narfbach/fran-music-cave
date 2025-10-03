@@ -199,6 +199,33 @@ uploadForm.addEventListener('submit', async (e) => {
     const trackTitle = document.getElementById('trackTitle').value.trim();
     const trackArtist = document.getElementById('trackArtist').value.trim();
 
+    // Remove previous error states
+    trackUrlInput.classList.remove('error');
+    trackTitleInput.classList.remove('error');
+    trackArtistInput.classList.remove('error');
+
+    // Validate all fields are filled
+    let hasError = false;
+
+    if (!trackUrl) {
+        trackUrlInput.classList.add('error');
+        hasError = true;
+    }
+
+    if (!trackTitle) {
+        trackTitleInput.classList.add('error');
+        hasError = true;
+    }
+
+    if (!trackArtist) {
+        trackArtistInput.classList.add('error');
+        hasError = true;
+    }
+
+    if (hasError) {
+        return;
+    }
+
     // Procesar URL
     const trackData = processTrackUrl(trackUrl);
 
