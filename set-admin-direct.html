@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Setting Admin...</title>
+    <style>
+        body{background:#000;color:#999;font-family:'Courier New',monospace;padding:2rem;text-align:center}
+        #result{margin-top:2rem;padding:1rem;background:#0a0a0a;border:1px solid #1a1a1a}
+    </style>
+</head>
+<body>
+    <h1>Setting Admin Status...</h1>
+    <div id="result">Processing...</div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSUwJP4x7gVE21K3fTs1iYGy_BXBXQZ2k",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "824700903031",
+            appId: "1:824700903031:web:d30a58a783fc98c738f3a7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function setAdmin() {
+            try {
+                const result = document.getElementById('result');
+                result.innerHTML = 'Searching for user...';
+
+                // Buscar usuario por email
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('email', '==', 'narfbach@gmail.com'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    result.innerHTML = '❌ User not found. Trying alternative method...';
+
+                    // Si no lo encuentra, buscar todos
+                    const allUsers = await getDocs(usersRef);
+                    result.innerHTML = `Found ${allUsers.size} users:<br><br>`;
+
+                    allUsers.forEach((doc) => {
+                        const data = doc.data();
+                        result.innerHTML += `${data.email || data.username} - ID: ${doc.id}<br>`;
+
+                        // Si encontramos a Fran, actualizar
+                        if (data.email === 'narfbach@gmail.com' || data.username === 'Fran') {
+                            updateDoc(doc.ref, { isAdmin: true })
+                                .then(() => {
+                                    result.innerHTML = `✅ SUCCESS!<br><br>${data.email} is now ADMIN<br><br>Go to your <a href="profile.html" style="color:#666">profile</a> to see the changes.`;
+                                });
+                        }
+                    });
+                } else {
+                    const userDoc = snapshot.docs[0];
+                    await updateDoc(userDoc.ref, { isAdmin: true });
+                    result.innerHTML = `✅ SUCCESS!<br><br>narfbach@gmail.com is now ADMIN<br><br>Go to your <a href="profile.html" style="color:#666">profile</a> to see the changes.`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `❌ Error: ${error.message}<br><br>Error code: ${error.code}`;
+                console.error(error);
+            }
+        }
+
+        // Ejecutar automáticamente
+        setAdmin();
+    </script>
+</body>
+</html>
