@@ -1,6 +1,7 @@
 // Music tracks data - Se cargará desde Firebase
 let musicTracks = [];
 let allTracksLoaded = false;
+let trackIds = new Set(); // Para detectar tracks nuevos
 
 // Variables para infinite scroll
 let currentIndex = 0;
@@ -25,6 +26,31 @@ async function loadTracksFromFirebase() {
 
         // Escuchar cambios en tiempo real
         window.chatOnSnapshot(q, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const trackData = {
+                        id: change.doc.id,
+                        ...change.doc.data()
+                    };
+
+                    // Si es un track nuevo (no en la carga inicial)
+                    if (allTracksLoaded && !trackIds.has(trackData.id)) {
+                        // Insertar al principio del feed con animación
+                        const newCard = createTrackCard(trackData);
+                        newCard.classList.add('track-new');
+                        feedContainer.insertBefore(newCard, feedContainer.firstChild);
+
+                        // Quitar la clase después de la animación
+                        setTimeout(() => {
+                            newCard.classList.remove('track-new');
+                        }, 1000);
+                    }
+
+                    trackIds.add(trackData.id);
+                }
+            });
+
+            // Actualizar array completo
             musicTracks = [];
             snapshot.forEach((doc) => {
                 musicTracks.push({
@@ -39,6 +65,11 @@ async function loadTracksFromFirebase() {
                 feedContainer.innerHTML = '';
                 currentIndex = 0;
                 loadMoreTracks();
+
+                // Marcar todos los tracks iniciales
+                snapshot.forEach((doc) => {
+                    trackIds.add(doc.id);
+                });
             }
         });
     } catch (error) {
