@@ -7,6 +7,12 @@ const uploadSuccess = document.getElementById('uploadSuccess');
 
 // Abrir modal de upload
 uploadToggle.addEventListener('click', () => {
+    // Check if user is logged in
+    if (!window.currentUser) {
+        alert('⚠️ Debes estar registrado para subir tracks.\n\nCrea tu cuenta gratis haciendo click en LOGIN y comparte tu música favorita con la comunidad.');
+        return;
+    }
+
     uploadSection.classList.add('active');
     document.body.style.overflow = 'hidden';
 });
