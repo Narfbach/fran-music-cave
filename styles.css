@@ -94,7 +94,6 @@ nav {
         0 0 60px rgba(200, 200, 200, 0.8),
         0 0 90px rgba(150, 150, 150, 0.6),
         0 0 120px rgba(100, 100, 100, 0.4);
-    animation: neonFlicker 8s linear infinite;
 }
 
 .hero-banner p {
