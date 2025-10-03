@@ -81,17 +81,36 @@ async function extractMetadata(url) {
 
                 console.log('Spotify oEmbed data:', data);
 
-                // Spotify oEmbed returns title in different formats
-                // Try multiple patterns
-                let titleMatch = data.title.match(/(.*?)\s+·\s+(.*)/); // "Song · Artist"
+                // Extract from HTML iframe if available
+                let title = data.title;
+                let artist = '';
+
+                // Check if there's a thumbnail_url or provider_name
+                if (data.provider_name) {
+                    console.log('Provider:', data.provider_name);
+                }
+
+                // Try to parse from HTML if available
+                if (data.html) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.html, 'text/html');
+                    const iframeSrc = doc.querySelector('iframe')?.src;
+                    console.log('iframe src:', iframeSrc);
+                }
+
+                // Try multiple separator patterns
+                let titleMatch = title.match(/^(.*?)\s*·\s*(.+)$/); // "Song · Artist"
                 if (!titleMatch) {
-                    titleMatch = data.title.match(/(.*?)\s+by\s+(.*)/); // "Song by Artist"
+                    titleMatch = title.match(/^(.*?)\s+by\s+(.+)$/i); // "Song by Artist"
                 }
                 if (!titleMatch) {
-                    titleMatch = data.title.match(/(.*?)\s+-\s+(.*)/); // "Song - Artist"
+                    titleMatch = title.match(/^(.*?)\s*-\s*(.+)$/); // "Song - Artist"
                 }
                 if (!titleMatch) {
-                    titleMatch = data.title.match(/(.*?)\s+–\s+(.*)/); // "Song – Artist" (em dash)
+                    titleMatch = title.match(/^(.*?)\s*–\s*(.+)$/); // "Song – Artist" (em dash)
+                }
+                if (!titleMatch) {
+                    titleMatch = title.match(/^(.*?)\s*\|\s*(.+)$/); // "Song | Artist"
                 }
 
                 if (titleMatch) {
@@ -101,9 +120,10 @@ async function extractMetadata(url) {
                     };
                 } else {
                     // If no pattern matches, use the whole title
+                    console.log('No pattern matched for:', title);
                     return {
-                        title: data.title,
-                        artist: ''
+                        title: title,
+                        artist: artist
                     };
                 }
             }
