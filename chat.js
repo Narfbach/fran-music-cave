@@ -215,9 +215,11 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
 
     messageDiv.innerHTML = `
         <div style="position:relative">
-            <div class="message-avatar" style="width:32px;height:32px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
-                ${avatarHTML}
-            </div>
+            <a href="profile.html" style="display:block">
+                <div class="message-avatar" style="width:32px;height:32px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
+                    ${avatarHTML}
+                </div>
+            </a>
             <div id="${cardId}" class="message-user-card" style="display:none;position:fixed;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:220px;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
         </div>
         <div style="flex:1;min-width:0">
