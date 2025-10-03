@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Usernames - The Music Cave</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: monospace;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        button {
+            background: #ff3366;
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 1rem;
+            margin: 1rem 0;
+        }
+        button:hover {
+            background: #ff0044;
+        }
+        #status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>FIX USERNAMES</h1>
+    <p>This will check all users and set their username field if missing (using email prefix or displayName)</p>
+    <button onclick="fixUsernames()">FIX USERNAMES</button>
+    <div id="status"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "101732494139",
+            appId: "1:101732494139:web:5e4be5513b3e7b81eb0e08"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const isAdmin = userDoc.exists() && userDoc.data().isAdmin;
+
+                if (isAdmin) {
+                    document.getElementById('status').innerHTML = `<p style="color:#00ff00">✓ Logged in as: ${user.email}</p><p>Admin: YES</p>`;
+                } else {
+                    document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ You must be an admin to use this tool</p>`;
+                }
+            } else {
+                document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ Not logged in. Please login first.</p>`;
+            }
+        });
+
+        window.fixUsernames = async function() {
+            if (!currentUser) {
+                alert('You must be logged in');
+                return;
+            }
+
+            const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+            if (!userDoc.exists() || !userDoc.data().isAdmin) {
+                alert('You must be an admin');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to fix all usernames?')) {
+                return;
+            }
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>⏳ Fixing usernames...</p>';
+
+            try {
+                const usersRef = collection(db, 'users');
+                const snapshot = await getDocs(usersRef);
+
+                let fixed = 0;
+                const updatePromises = [];
+
+                snapshot.forEach((docSnapshot) => {
+                    const userData = docSnapshot.data();
+
+                    // If username is missing or is an email
+                    if (!userData.username || userData.username.includes('@')) {
+                        const newUsername = userData.email ? userData.email.split('@')[0] : 'Anonymous';
+
+                        updatePromises.push(
+                            updateDoc(doc(db, 'users', docSnapshot.id), {
+                                username: newUsername
+                            })
+                        );
+                        fixed++;
+                    }
+                });
+
+                await Promise.all(updatePromises);
+
+                statusDiv.innerHTML = `
+                    <p style="color:#00ff00">✓ Fix complete!</p>
+                    <p>Users fixed: ${fixed}</p>
+                    <p>All users now have proper usernames.</p>
+                `;
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<p style="color:#ff3366">✗ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
