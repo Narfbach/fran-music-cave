@@ -179,9 +179,12 @@ function formatTime(timestamp) {
 }
 
 // Función para agregar mensaje al DOM
-function addMessageToDOM(username, message, timestamp, isAdmin = false) {
+async function addMessageToDOM(username, message, timestamp, isAdmin = false, userId = null, photoURL = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
+    messageDiv.style.display = 'flex';
+    messageDiv.style.gap = '.5rem';
+    messageDiv.style.alignItems = 'flex-start';
 
     // Apply neon glow based on admin status
     let userColor, userShadow;
@@ -193,11 +196,89 @@ function addMessageToDOM(username, message, timestamp, isAdmin = false) {
         userShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
     }
 
+    // Create avatar SVG default
+    const defaultAvatar = `<svg width="32" height="32" viewBox="0 0 100 100" style="opacity:0.3">
+        <circle cx="50" cy="50" r="45" fill="#111"/>
+        <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+        <circle cx="50" cy="50" r="30" fill="#111"/>
+        <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+        <circle cx="50" cy="50" r="8" fill="#222"/>
+        <circle cx="50" cy="50" r="3" fill="#000"/>
+    </svg>`;
+
+    const avatarHTML = photoURL
+        ? `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
+        : defaultAvatar;
+
+    // Generate unique ID for this message's card
+    const cardId = `user-card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     messageDiv.innerHTML = `
-        <div class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}">${username}</div>
-        <div class="chat-message-text">${message}</div>
-        <div class="chat-message-time">${formatTime(timestamp)}</div>
+        <div style="position:relative">
+            <div class="message-avatar" style="width:32px;height:32px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
+                ${avatarHTML}
+            </div>
+            <div id="${cardId}" class="message-user-card" style="display:none;position:absolute;left:100%;top:0;margin-left:.5rem;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:200px;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
+        </div>
+        <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem">
+                <a href="profile.html" class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}; text-decoration:none; cursor:pointer">${username}</a>
+                <div class="chat-message-time" style="font-size:.5rem;color:#333;letter-spacing:1px">${formatTime(timestamp)}</div>
+            </div>
+            <div class="chat-message-text" style="color:#999;font-size:.7rem;letter-spacing:1px;word-wrap:break-word">${message}</div>
+        </div>
     `;
+
+    // Setup hover for avatar and username
+    const avatar = messageDiv.querySelector('.message-avatar');
+    const usernameLink = messageDiv.querySelector('.chat-message-user');
+    const card = messageDiv.querySelector(`#${cardId}`);
+
+    // Load user data if userId is available
+    if (userId) {
+        try {
+            const userDoc = await window.chatGetDoc(window.chatDoc(window.chatDb, 'users', userId));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const rank = getRank(userData.diggerScore || 0);
+                const displayRank = isAdmin ? 'ADMIN' : rank;
+
+                const cardAvatarHTML = photoURL
+                    ? `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
+                    : defaultAvatar.replace('32', '50');
+
+                const rankColor = isAdmin ? '#ff3366' : '#999';
+                const userNameColor = isAdmin ? '#ff3366' : '#fff';
+                const userNameShadow = isAdmin ? '0 0 7px #ff3366, 0 0 10px #ff3366' : '0 0 7px #fff, 0 0 10px #fff';
+
+                card.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
+                        <div style="width:50px;height:50px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center">
+                            ${cardAvatarHTML}
+                        </div>
+                        <div>
+                            <div style="font-size:.8rem;letter-spacing:2px;margin-bottom:.3rem;color:${userNameColor};text-shadow:${userNameShadow}">${username}</div>
+                            <div style="font-size:.6rem;letter-spacing:1px;color:${rankColor}">${displayRank}</div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid #1a1a1a;padding-top:.8rem;font-size:.6rem;letter-spacing:1px;color:#666">
+                        <div style="margin-bottom:.3rem">DIGGER SCORE: <span style="color:#999">${userData.diggerScore || 0}</span></div>
+                        <div>TRACKS SHARED: <span style="color:#999">${userData.tracksSubmitted || 0}</span></div>
+                    </div>
+                `;
+
+                // Show/hide card on hover
+                avatar.addEventListener('mouseenter', () => card.style.display = 'block');
+                avatar.addEventListener('mouseleave', () => card.style.display = 'none');
+                usernameLink.addEventListener('mouseenter', () => card.style.display = 'block');
+                usernameLink.addEventListener('mouseleave', () => card.style.display = 'none');
+                card.addEventListener('mouseenter', () => card.style.display = 'block');
+                card.addEventListener('mouseleave', () => card.style.display = 'none');
+            }
+        } catch (error) {
+            console.error('Error loading user data for message:', error);
+        }
+    }
 
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -234,7 +315,8 @@ async function sendMessage() {
             message: messageText,
             timestamp: window.chatServerTimestamp(),
             userId: currentChatUser ? currentChatUser.userId : null,
-            isAdmin: currentChatUser ? currentChatUser.isAdmin : false
+            isAdmin: currentChatUser ? currentChatUser.isAdmin : false,
+            photoURL: currentChatUser ? currentChatUser.photoURL : null
         });
 
         chatMessage.focus();
@@ -281,7 +363,14 @@ function startListeningToMessages() {
 
             // Mostrar en orden cronológico (inverso a como vienen)
             messages.reverse().forEach((data) => {
-                addMessageToDOM(data.username, data.message, data.timestamp, data.isAdmin || false);
+                addMessageToDOM(
+                    data.username,
+                    data.message,
+                    data.timestamp,
+                    data.isAdmin || false,
+                    data.userId || null,
+                    data.photoURL || null
+                );
             });
         });
     } catch (error) {
