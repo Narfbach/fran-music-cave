@@ -69,67 +69,20 @@ function closeUploadModal() {
 // Función para extraer metadata automáticamente
 async function extractMetadata(url) {
     try {
-        // Spotify - use CORS proxy to fetch metadata
+        // Spotify - Extract title only (API doesn't provide artist)
         if (url.includes('spotify.com')) {
             const match = url.match(/track\/([a-zA-Z0-9]+)/);
             if (match) {
                 const trackId = match[1];
+                const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
 
-                try {
-                    // Use allorigins.win as CORS proxy
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://open.spotify.com/track/${trackId}`)}`;
-                    const response = await fetch(proxyUrl);
-                    const data = await response.json();
+                const response = await fetch(oEmbedUrl);
+                const data = await response.json();
 
-                    if (data.contents) {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(data.contents, 'text/html');
-
-                        // Try og:title which usually has "Song · Artist"
-                        const ogTitle = doc.querySelector('meta[property="og:title"]')?.content;
-                        console.log('Spotify og:title:', ogTitle);
-
-                        if (ogTitle) {
-                            // Try to split by · (middle dot)
-                            const parts = ogTitle.split('·').map(p => p.trim());
-                            if (parts.length >= 2) {
-                                return {
-                                    title: parts[0],
-                                    artist: parts[1]
-                                };
-                            }
-                        }
-
-                        // Try title tag as fallback
-                        const titleTag = doc.querySelector('title')?.textContent;
-                        if (titleTag) {
-                            console.log('Spotify title tag:', titleTag);
-                            const parts = titleTag.split(' - ').map(p => p.trim());
-                            if (parts.length >= 2) {
-                                return {
-                                    title: parts[1],
-                                    artist: parts[0]
-                                };
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.log('Failed to fetch via proxy:', error);
-                }
-
-                // Fallback to oEmbed (only has song name, no artist)
-                try {
-                    const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
-                    const response = await fetch(oEmbedUrl);
-                    const data = await response.json();
-
-                    return {
-                        title: data.title || '',
-                        artist: ''
-                    };
-                } catch (error) {
-                    console.log('oEmbed also failed:', error);
-                }
+                return {
+                    title: data.title || '',
+                    artist: '' // Spotify API doesn't provide artist, user must fill manually
+                };
             }
         }
 
@@ -245,7 +198,6 @@ uploadForm.addEventListener('submit', async (e) => {
     const trackUrl = document.getElementById('trackUrl').value.trim();
     const trackTitle = document.getElementById('trackTitle').value.trim();
     const trackArtist = document.getElementById('trackArtist').value.trim();
-    const submitterName = document.getElementById('submitterName').value.trim();
 
     // Procesar URL
     const trackData = processTrackUrl(trackUrl);
@@ -263,7 +215,7 @@ uploadForm.addEventListener('submit', async (e) => {
     try {
         // Get current user info and admin status
         const userId = window.currentUser?.uid || null;
-        const username = window.currentUser?.displayName || submitterName || 'Anonymous';
+        const username = window.currentUser?.displayName || 'Anonymous';
 
         // Get user's admin status from Firestore
         let isAdmin = false;
