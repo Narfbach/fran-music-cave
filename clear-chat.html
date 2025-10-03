@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Chat - The Music Cave</title>
+    <style>
+        body{background:#000;color:#999;font-family:'Courier New',monospace;padding:2rem;max-width:600px;margin:0 auto}
+        button{background:#1a1a1a;color:#999;border:1px solid #333;padding:1rem 2rem;font-family:'Courier New',monospace;cursor:pointer;margin-top:1rem;font-size:.8rem;letter-spacing:2px}
+        button:hover{background:#333}
+        button.danger{border-color:#ff3366;color:#ff3366}
+        button.danger:hover{background:#ff3366;color:#000}
+        #status{margin-top:1rem;padding:1rem;background:#0a0a0a;border:1px solid #1a1a1a}
+    </style>
+</head>
+<body>
+    <h1>Clear Chat Messages</h1>
+    <p>This will delete ALL messages from the chat.</p>
+    <p style="color:#ff3366">⚠️ This action cannot be undone!</p>
+
+    <button class="danger" onclick="clearAllMessages()">DELETE ALL MESSAGES</button>
+    <div id="status"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSUwJP4x7gVE21K3fTs1iYGy_BXBXQZ2k",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "824700903031",
+            appId: "1:824700903031:web:d30a58a783fc98c738f3a7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.clearAllMessages = async function() {
+            const confirmation = confirm('Are you ABSOLUTELY sure you want to delete ALL chat messages?\n\nThis cannot be undone!');
+            if (!confirmation) return;
+
+            const status = document.getElementById('status');
+            status.innerHTML = 'Deleting messages...';
+
+            try {
+                const messagesRef = collection(db, 'messages');
+                const snapshot = await getDocs(messagesRef);
+
+                const totalMessages = snapshot.size;
+                status.innerHTML = `Found ${totalMessages} messages. Deleting...`;
+
+                let deletedCount = 0;
+                const deletePromises = [];
+
+                snapshot.forEach((doc) => {
+                    deletePromises.push(
+                        deleteDoc(doc.ref).then(() => {
+                            deletedCount++;
+                            status.innerHTML = `Deleted ${deletedCount}/${totalMessages} messages...`;
+                        })
+                    );
+                });
+
+                await Promise.all(deletePromises);
+
+                status.innerHTML = `✅ SUCCESS! Deleted ${deletedCount} messages.<br><br>The chat is now empty.`;
+            } catch (error) {
+                status.innerHTML = `❌ Error: ${error.message}`;
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
