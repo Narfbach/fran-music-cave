@@ -141,7 +141,6 @@ function createTrackCard(track) {
                         <div class="track-user-avatar" style="width:24px;height:24px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center"></div>
                         <a href="profile.html" class="track-username" style="color:${userColor};text-shadow:${userShadow};text-decoration:none;cursor:pointer">${submittedBy}</a>
                     </div>
-                    <div id="${userCardId}" class="track-user-card" style="display:none;position:fixed;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:220px;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
                 </span>
             </div>
         </div>
@@ -256,7 +255,16 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
             trackAvatar.innerHTML = smallAvatarHTML;
         }
 
-        const userCard = card.querySelector(`#${userCardId}`);
+        // Create user card in body instead of inside track card
+        let userCard = document.getElementById(userCardId);
+        if (!userCard) {
+            userCard = document.createElement('div');
+            userCard.id = userCardId;
+            userCard.className = 'track-user-card';
+            userCard.style.cssText = 'display:none;position:fixed;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:220px;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap';
+            document.body.appendChild(userCard);
+        }
+
         userCard.innerHTML = `
             <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
                 <div style="width:50px;height:50px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center">
