@@ -46,10 +46,19 @@
         <!-- Profile Header -->
         <div class="profile-header">
             <div style="position:relative;display:inline-block;margin-bottom:1.5rem">
-                <div id="profilePicture" style="width:120px;height:120px;border-radius:50%;border:2px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:3rem;color:#333;margin:0 auto">
-                    <div style="font-size:1rem;color:#666">Loading...</div>
+                <div id="profilePicture" style="width:120px;height:120px;border-radius:50%;border:2px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;margin:0 auto">
+                    <!-- Default vinyl record avatar -->
+                    <svg width="120" height="120" viewBox="0 0 100 100" style="opacity:0.3">
+                        <circle cx="50" cy="50" r="45" fill="#111"/>
+                        <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+                        <circle cx="50" cy="50" r="30" fill="#111"/>
+                        <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+                        <circle cx="50" cy="50" r="8" fill="#222"/>
+                        <circle cx="50" cy="50" r="3" fill="#000"/>
+                    </svg>
                 </div>
-                <a href="https://gravatar.com" target="_blank" class="photo-upload-btn" title="Change on Gravatar.com">🎨</a>
+                <button onclick="document.getElementById('photoUpload').click()" class="photo-upload-btn" title="Upload your photo">📷</button>
+                <input type="file" id="photoUpload" accept="image/jpeg,image/png,image/jpg,image/webp" style="display:none">
             </div>
             <div class="profile-username" id="profileUsername">...</div>
             <div class="profile-joined" id="profileJoined">MEMBER SINCE ...</div>
@@ -121,9 +130,6 @@
         </div>
     </div>
 
-    <!-- MD5 for Gravatar -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
-
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -155,27 +161,19 @@
             loadUserTracks(user.uid);
         });
 
-        // Generate Gravatar URL from email
-        function getGravatarUrl(email) {
-            const emailHash = md5(email.toLowerCase().trim());
-            // d=identicon generates unique geometric patterns
-            // d=robohash generates unique robot avatars (also cool!)
-            // d=retro generates 8-bit style avatars
-            return `https://www.gravatar.com/avatar/${emailHash}?s=200&d=identicon`;
-        }
-
         async function loadUserProfile(user) {
             document.getElementById('profileUsername').textContent = user.displayName || 'Anonymous';
-
-            // Load Gravatar profile picture
-            const gravatarUrl = getGravatarUrl(user.email);
-            const profilePic = document.getElementById('profilePicture');
-            profilePic.innerHTML = `<img src="${gravatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="Profile picture">`;
 
             try {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+
+                    // Load custom photo if exists, otherwise show vinyl record
+                    const profilePic = document.getElementById('profilePicture');
+                    if (userData.photoURL) {
+                        profilePic.innerHTML = `<img src="${userData.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Profile picture">`;
+                    }
 
                     // Update stats
                     const diggerScore = userData.diggerScore || 0;
@@ -288,6 +286,107 @@
                     `;
                     tracksList.appendChild(trackDiv);
                 });
+            });
+        }
+
+        // Handle photo upload
+        document.getElementById('photoUpload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
+                alert('Please upload a valid image (JPG, PNG, or WebP)');
+                return;
+            }
+
+            // Validate file size (max 5MB before compression)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image too large. Please use an image smaller than 5MB');
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) return;
+
+            // Show loading state
+            const uploadBtn = document.querySelector('.photo-upload-btn');
+            const originalText = uploadBtn.textContent;
+            uploadBtn.textContent = '⏳';
+            uploadBtn.disabled = true;
+
+            try {
+                // Compress and convert to Data URI
+                const dataUri = await compressImage(file);
+
+                // Save to Firestore
+                const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                await updateDoc(doc(db, 'users', user.uid), {
+                    photoURL: dataUri
+                });
+
+                // Update display
+                const profilePic = document.getElementById('profilePicture');
+                profilePic.innerHTML = `<img src="${dataUri}" style="width:100%;height:100%;object-fit:cover" alt="Profile picture">`;
+
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                alert('Error uploading photo. Please try again.');
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Compress image to Data URI
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // Calculate dimensions (max 512x512)
+                        let width = img.width;
+                        let height = img.height;
+                        const maxSize = 512;
+
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height = (height * maxSize) / width;
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width = (width * maxSize) / height;
+                                height = maxSize;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        // Draw and compress
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Convert to JPEG with quality 0.8
+                        let dataUri = canvas.toDataURL('image/jpeg', 0.8);
+
+                        // If still too large, reduce quality
+                        if (dataUri.length > 200 * 1024) {
+                            dataUri = canvas.toDataURL('image/jpeg', 0.6);
+                        }
+
+                        resolve(dataUri);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
         }
     </script>
