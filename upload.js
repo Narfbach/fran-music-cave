@@ -79,12 +79,31 @@ async function extractMetadata(url) {
                 const response = await fetch(oEmbedUrl);
                 const data = await response.json();
 
-                // Spotify oEmbed returns title in format: "Song Name" by "Artist Name"
-                const titleMatch = data.title.match(/(.*?)\s+by\s+(.*)/);
+                console.log('Spotify oEmbed data:', data);
+
+                // Spotify oEmbed returns title in different formats
+                // Try multiple patterns
+                let titleMatch = data.title.match(/(.*?)\s+·\s+(.*)/); // "Song · Artist"
+                if (!titleMatch) {
+                    titleMatch = data.title.match(/(.*?)\s+by\s+(.*)/); // "Song by Artist"
+                }
+                if (!titleMatch) {
+                    titleMatch = data.title.match(/(.*?)\s+-\s+(.*)/); // "Song - Artist"
+                }
+                if (!titleMatch) {
+                    titleMatch = data.title.match(/(.*?)\s+–\s+(.*)/); // "Song – Artist" (em dash)
+                }
+
                 if (titleMatch) {
                     return {
                         title: titleMatch[1].trim(),
                         artist: titleMatch[2].trim()
+                    };
+                } else {
+                    // If no pattern matches, use the whole title
+                    return {
+                        title: data.title,
+                        artist: ''
                     };
                 }
             }
