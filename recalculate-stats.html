@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recalculate Stats - The Music Cave</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: monospace;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        button {
+            background: #ff3366;
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 1rem;
+            margin: 1rem 0;
+        }
+        button:hover {
+            background: #ff0044;
+        }
+        #status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>RECALCULATE USER STATS</h1>
+    <p>This will recalculate all user stats based on their submitted tracks and received likes</p>
+    <button onclick="recalculateStats()">RECALCULATE ALL STATS</button>
+    <div id="status"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, where } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "101732494139",
+            appId: "1:101732494139:web:5e4be5513b3e7b81eb0e08"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const isAdmin = userDoc.exists() && userDoc.data().isAdmin;
+
+                if (isAdmin) {
+                    document.getElementById('status').innerHTML = `<p style="color:#00ff00">✓ Logged in as: ${user.email}</p><p>Admin: YES</p>`;
+                } else {
+                    document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ You must be an admin to use this tool</p>`;
+                }
+            } else {
+                document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ Not logged in. Please login first.</p>`;
+            }
+        });
+
+        window.recalculateStats = async function() {
+            if (!currentUser) {
+                alert('You must be logged in');
+                return;
+            }
+
+            const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+            if (!userDoc.exists() || !userDoc.data().isAdmin) {
+                alert('You must be an admin');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to recalculate all user stats? This will overwrite current values.')) {
+                return;
+            }
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>⏳ Recalculating stats...</p>';
+
+            try {
+                // Get all tracks
+                const tracksRef = collection(db, 'tracks');
+                const tracksSnapshot = await getDocs(tracksRef);
+
+                // Calculate stats per user
+                const userStats = {};
+
+                tracksSnapshot.forEach((trackDoc) => {
+                    const trackData = trackDoc.data();
+                    const userId = trackData.userId;
+
+                    if (userId) {
+                        if (!userStats[userId]) {
+                            userStats[userId] = {
+                                tracksSubmitted: 0,
+                                totalLikes: 0,
+                                diggerScore: 0
+                            };
+                        }
+
+                        userStats[userId].tracksSubmitted += 1;
+                        userStats[userId].totalLikes += (trackData.likes || 0);
+                        userStats[userId].diggerScore += 10; // 10 points per track
+                        userStats[userId].diggerScore += (trackData.likes || 0); // 1 point per like
+                    }
+                });
+
+                // Update all users
+                const updatePromises = [];
+                let updated = 0;
+
+                for (const userId in userStats) {
+                    const stats = userStats[userId];
+                    updatePromises.push(
+                        updateDoc(doc(db, 'users', userId), {
+                            tracksSubmitted: stats.tracksSubmitted,
+                            totalLikes: stats.totalLikes,
+                            diggerScore: stats.diggerScore
+                        })
+                    );
+                    updated++;
+                }
+
+                await Promise.all(updatePromises);
+
+                statusDiv.innerHTML = `
+                    <p style="color:#00ff00">✓ Recalculation complete!</p>
+                    <p>Users updated: ${updated}</p>
+                    <p>Total tracks processed: ${tracksSnapshot.size}</p>
+                    <details style="margin-top:1rem">
+                        <summary>Details</summary>
+                        <pre style="font-size:0.8rem;margin-top:0.5rem">${JSON.stringify(userStats, null, 2)}</pre>
+                    </details>
+                `;
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<p style="color:#ff3366">✗ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
