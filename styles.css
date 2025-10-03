@@ -892,24 +892,25 @@ nav {
 
 .faq-icon {
     position: relative;
-    width: 22px;
-    height: 22px;
-    border: 1px solid #333;
+    width: 35px;
+    height: 35px;
+    border: 1px solid #1a1a1a;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #666;
-    font-size: 0.75rem;
+    font-size: 1rem;
     cursor: help;
     transition: all 0.3s;
     font-family: 'Courier New', monospace;
     flex-shrink: 0;
+    margin-right: 0.5rem;
 }
 
 .faq-icon:hover {
     color: #999;
-    border-color: #555;
+    border-color: #333;
 }
 
 .faq-tooltip {
