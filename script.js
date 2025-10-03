@@ -273,23 +273,25 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
             </div>
         `;
 
-        // Setup hover for both username and avatar
+        // Setup hover - exactly like chat
+        const trackAvatarEl = card.querySelector('.track-user-avatar');
         const usernameLink = card.querySelector('.track-username');
-        const userInfo = card.querySelector('.track-user-info');
 
-        const showCard = () => {
-            const rect = userInfo.getBoundingClientRect();
+        const showCard = (e) => {
+            const rect = trackAvatarEl.getBoundingClientRect();
             userCard.style.display = 'block';
             userCard.style.left = `${rect.left}px`;
-            userCard.style.top = `${rect.bottom + 10}px`;
+            userCard.style.top = `${rect.top - userCard.offsetHeight - 10}px`;
         };
 
         const hideCard = () => {
             userCard.style.display = 'none';
         };
 
-        userInfo.addEventListener('mouseenter', showCard);
-        userInfo.addEventListener('mouseleave', hideCard);
+        trackAvatarEl.addEventListener('mouseenter', showCard);
+        trackAvatarEl.addEventListener('mouseleave', hideCard);
+        usernameLink.addEventListener('mouseenter', showCard);
+        usernameLink.addEventListener('mouseleave', hideCard);
         userCard.addEventListener('mouseenter', () => userCard.style.display = 'block');
         userCard.addEventListener('mouseleave', hideCard);
 
