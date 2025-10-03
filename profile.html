@@ -151,15 +151,29 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = 'auth.html';
-                return;
-            }
+        onAuthStateChanged(auth, async (currentUser) => {
+            // Get user ID from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewUserId = urlParams.get('user');
 
-            // Load user profile
-            loadUserProfile(user);
-            loadUserTracks(user.uid);
+            // If viewing another user's profile, don't require login (but hide upload button)
+            if (viewUserId) {
+                // Hide upload button for other users
+                const uploadBtn = document.querySelector('.photo-upload-btn');
+                if (uploadBtn) uploadBtn.style.display = 'none';
+
+                // Load other user's profile
+                loadUserProfileById(viewUserId);
+                loadUserTracks(viewUserId);
+            } else {
+                // Viewing own profile - require login
+                if (!currentUser) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                loadUserProfile(currentUser);
+                loadUserTracks(currentUser.uid);
+            }
         });
 
         async function loadUserProfile(user) {
@@ -256,6 +270,72 @@
                         document.getElementById('profileJoined').textContent =
                             `MEMBER SINCE ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}`;
                     }
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        async function loadUserProfileById(userId) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (!userDoc.exists()) {
+                    document.getElementById('profileUsername').textContent = 'USER NOT FOUND';
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const username = userData.displayName || userData.email?.split('@')[0] || 'Anonymous';
+
+                document.getElementById('profileUsername').textContent = username;
+
+                // Load custom photo if exists
+                const profilePic = document.getElementById('profilePicture');
+                if (userData.photoURL) {
+                    profilePic.innerHTML = `<img src="${userData.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Profile picture">`;
+                }
+
+                // Update stats
+                const diggerScore = userData.diggerScore || 0;
+                const tracksSubmitted = userData.tracksSubmitted || 0;
+                const totalLikes = userData.totalLikes || 0;
+                const avgLikes = tracksSubmitted > 0 ? Math.round(totalLikes / tracksSubmitted) : 0;
+
+                document.getElementById('diggerScore').textContent = diggerScore;
+                document.getElementById('tracksSubmitted').textContent = tracksSubmitted;
+                document.getElementById('totalLikes').textContent = totalLikes;
+                document.getElementById('avgLikes').textContent = avgLikes;
+
+                // Update rank
+                const rank = userData.isAdmin ? 'ADMIN' : getRank(diggerScore);
+                document.getElementById('rankInfo').textContent = userData.isAdmin ? 'ADMIN' : `RANK: ${rank}`;
+                document.getElementById('userRank').textContent = rank;
+
+                // Add neon glow
+                if (userData.isAdmin) {
+                    document.getElementById('profileUsername').style.color = '#ff3366';
+                    document.getElementById('profileUsername').style.textShadow = '0 0 7px #ff3366, 0 0 10px #ff3366, 0 0 21px #ff3366, 0 0 42px #ff0044';
+                    document.getElementById('userRank').style.color = '#ff3366';
+                    document.getElementById('userRank').style.textShadow = '0 0 7px #ff3366, 0 0 10px #ff3366';
+                } else {
+                    document.getElementById('profileUsername').style.color = '#fff';
+                    document.getElementById('profileUsername').style.textShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
+                    document.getElementById('userRank').style.color = '#fff';
+                    document.getElementById('userRank').style.textShadow = '0 0 7px #fff, 0 0 10px #fff';
+                }
+
+                // Update progress bar
+                const progress = (diggerScore % 100) / 100 * 100;
+                document.getElementById('scoreProgress').style.width = progress + '%';
+
+                // Update badges
+                updateBadges(userData);
+
+                // Show join date
+                if (userData.createdAt) {
+                    const date = userData.createdAt.toDate();
+                    document.getElementById('profileJoined').textContent =
+                        `MEMBER SINCE ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}`;
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);

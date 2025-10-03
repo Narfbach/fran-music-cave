@@ -139,7 +139,7 @@ function createTrackCard(track) {
                     <span style="color:#999">shared by</span>
                     <div class="track-user-info" style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
                         <div class="track-user-avatar" style="width:24px;height:24px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center"></div>
-                        <a href="profile.html" class="track-username" style="color:${userColor};text-shadow:${userShadow};text-decoration:none;cursor:pointer">${submittedBy}</a>
+                        <a href="${userId ? `profile.html?user=${userId}` : 'profile.html'}" class="track-username" style="color:${userColor};text-shadow:${userShadow};text-decoration:none;cursor:pointer">${submittedBy}</a>
                     </div>
                 </span>
             </div>

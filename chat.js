@@ -219,9 +219,11 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
         ? `<button onclick="deleteMessage('${messageId}')" style="background:transparent;border:1px solid #333;color:#666;font-size:.6rem;padding:.2rem .5rem;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:1px;transition:all .3s" onmouseover="this.style.borderColor='#ff3366';this.style.color='#ff3366'" onmouseout="this.style.borderColor='#333';this.style.color='#666'" title="Delete message">✕</button>`
         : '';
 
+    const profileUrl = userId ? `profile.html?user=${userId}` : 'profile.html';
+
     messageDiv.innerHTML = `
         <div style="position:relative">
-            <a href="profile.html" style="display:block">
+            <a href="${profileUrl}" style="display:block">
                 <div class="message-avatar" style="width:32px;height:32px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
                     ${avatarHTML}
                 </div>
@@ -230,7 +232,7 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
         </div>
         <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem;position:relative">
-                <a href="profile.html" class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}; text-decoration:none; cursor:pointer">${username}</a>
+                <a href="${profileUrl}" class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}; text-decoration:none; cursor:pointer">${username}</a>
                 <div class="chat-message-time" style="font-size:.5rem;color:#333;letter-spacing:1px">${formatTime(timestamp)}</div>
                 ${deleteBtnHTML}
             </div>
