@@ -277,11 +277,18 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
         const trackAvatarEl = card.querySelector('.track-user-avatar');
         const usernameLink = card.querySelector('.track-username');
 
+        if (!trackAvatarEl || !usernameLink) {
+            console.error('Track avatar or username not found');
+            return;
+        }
+
         const showCard = (e) => {
-            const rect = trackAvatarEl.getBoundingClientRect();
             userCard.style.display = 'block';
-            userCard.style.left = `${rect.left}px`;
-            userCard.style.top = `${rect.top - userCard.offsetHeight - 10}px`;
+            setTimeout(() => {
+                const rect = trackAvatarEl.getBoundingClientRect();
+                userCard.style.left = `${rect.left}px`;
+                userCard.style.top = `${rect.top - userCard.offsetHeight - 10}px`;
+            }, 0);
         };
 
         const hideCard = () => {
