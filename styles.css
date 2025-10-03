@@ -889,6 +889,45 @@ nav {
     letter-spacing: 3px;
 }
 
+.faq-icon {
+    position: relative;
+    color: #666;
+    cursor: help;
+    transition: color 0.3s;
+}
+
+.faq-icon:hover {
+    color: #999;
+}
+
+.faq-tooltip {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: #111;
+    border: 1px solid #333;
+    padding: 1rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+    width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.faq-tooltip strong {
+    color: #999;
+}
+
+.faq-icon:hover .faq-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
 .upload-close {
     background: transparent;
     border: 1px solid #1a1a1a;
