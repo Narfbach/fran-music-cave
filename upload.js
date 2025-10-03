@@ -92,14 +92,20 @@ uploadForm.addEventListener('submit', async (e) => {
     }
 
     try {
+        // Get current user info
+        const userId = window.currentUser?.uid || null;
+        const username = window.currentUser?.displayName || submitterName || 'Anonymous';
+
         // Guardar directamente en la colección "tracks" (publicación automática)
         await window.chatAddDoc(window.chatCollection(window.chatDb, 'tracks'), {
             title: trackTitle,
             artist: trackArtist,
             platform: trackData.platform,
             embedUrl: trackData.embedUrl,
-            submittedBy: submitterName || 'Anonymous',
-            timestamp: window.chatServerTimestamp()
+            submittedBy: username,
+            userId: userId,
+            timestamp: window.chatServerTimestamp(),
+            likes: 0
         });
 
         // Mostrar mensaje de éxito

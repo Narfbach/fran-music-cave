@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Fran's Music Cave</title>
+    <link rel="stylesheet" href="styles.min.css">
+    <style>
+        .auth-container{max-width:400px;margin:150px auto;padding:2rem}
+        .auth-header{text-align:center;margin-bottom:3rem}
+        .auth-header h1{font-size:1.5rem;color:#999;letter-spacing:4px;margin-bottom:.5rem}
+        .auth-header p{font-size:.7rem;color:#444;letter-spacing:2px}
+        .auth-form{border:1px solid #1a1a1a;padding:2rem;background:#0a0a0a}
+        .form-group{margin-bottom:1.5rem}
+        .form-group label{display:block;font-size:.7rem;color:#666;letter-spacing:2px;margin-bottom:.5rem;text-transform:uppercase}
+        .form-group input{width:100%;background:transparent;border:1px solid #1a1a1a;color:#999;font-family:'Courier New',monospace;font-size:.8rem;padding:.8rem;letter-spacing:1px}
+        .form-group input:focus{outline:none;border-color:#333}
+        .auth-btn{width:100%;background:transparent;border:1px solid #1a1a1a;color:#666;font-family:'Courier New',monospace;font-size:.8rem;padding:1rem;cursor:pointer;letter-spacing:3px;text-transform:uppercase;transition:all .3s;margin-bottom:1rem}
+        .auth-btn:hover{border-color:#333;color:#999}
+        .auth-btn.primary{color:#999;border-color:#333}
+        .auth-toggle{text-align:center;margin-top:2rem;font-size:.7rem;color:#444;letter-spacing:1px}
+        .auth-toggle a{color:#999;text-decoration:none;border-bottom:1px solid #333;cursor:pointer}
+        .auth-toggle a:hover{color:#ddd;border-color:#666}
+        .error-msg{background:#1a0000;border:1px solid #330000;color:#ff6b6b;padding:.8rem;margin-bottom:1rem;font-size:.7rem;letter-spacing:1px;display:none}
+        .error-msg.active{display:block}
+        .back-link{text-align:center;margin-top:2rem}
+        .back-link a{color:#444;font-size:.7rem;letter-spacing:2px;text-decoration:none;border-bottom:1px solid #1a1a1a}
+        .back-link a:hover{color:#666;border-color:#333}
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>FRAN MUSIC CAVE</h1>
+            <p id="authSubtitle">ENTER THE CAVE</p>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Login Form -->
+        <div class="auth-form" id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" autocomplete="current-password">
+            </div>
+            <button class="auth-btn primary" onclick="handleLogin()">LOGIN</button>
+            <div class="auth-toggle">
+                No account? <a onclick="showRegister()">Create one</a>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-form" id="registerForm" style="display:none">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="registerUsername" maxlength="20" autocomplete="username">
+                <small style="font-size:.65rem;color:#333;margin-top:.3rem;display:block">Your public name</small>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="registerEmail" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="registerPassword" autocomplete="new-password">
+                <small style="font-size:.65rem;color:#333;margin-top:.3rem;display:block">Min 6 characters</small>
+            </div>
+            <button class="auth-btn primary" onclick="handleRegister()">CREATE ACCOUNT</button>
+            <div class="auth-toggle">
+                Have an account? <a onclick="showLogin()">Login</a>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← BACK TO CAVE</a>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "518773964413",
+            appId: "1:518773964413:web:46f3b94fb6db076c323b14",
+            measurementId: "G-3NN8Q90FX8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.createUser = createUserWithEmailAndPassword;
+        window.signInUser = signInWithEmailAndPassword;
+        window.updateUserProfile = updateProfile;
+        window.setDocument = setDoc;
+        window.createDoc = doc;
+        window.serverTime = serverTimestamp;
+    </script>
+
+    <script>
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('authSubtitle').textContent = 'JOIN THE COMMUNITY';
+            hideError();
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('authSubtitle').textContent = 'ENTER THE CAVE';
+            hideError();
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = message;
+            errorMsg.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').classList.remove('active');
+        }
+
+        async function handleRegister() {
+            hideError();
+
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+
+            if (!username) {
+                showError('Please enter a username');
+                return;
+            }
+
+            if (username.length < 3) {
+                showError('Username must be at least 3 characters');
+                return;
+            }
+
+            if (!email) {
+                showError('Please enter your email');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                // Create auth user
+                const userCredential = await window.createUser(window.firebaseAuth, email, password);
+                const user = userCredential.user;
+
+                // Update profile with username
+                await window.updateUserProfile(user, {
+                    displayName: username
+                });
+
+                // Create user document in Firestore
+                await window.setDocument(window.createDoc(window.firebaseDb, 'users', user.uid), {
+                    username: username,
+                    email: email,
+                    createdAt: window.serverTime(),
+                    diggerScore: 0,
+                    badges: [],
+                    tracksSubmitted: 0,
+                    totalLikes: 0
+                });
+
+                alert('Account created! Welcome to the cave.');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Registration error:', error);
+
+                if (error.code === 'auth/email-already-in-use') {
+                    showError('Email already in use');
+                } else if (error.code === 'auth/invalid-email') {
+                    showError('Invalid email address');
+                } else if (error.code === 'auth/weak-password') {
+                    showError('Password is too weak');
+                } else {
+                    showError('Registration failed. Try again.');
+                }
+            }
+        }
+
+        async function handleLogin() {
+            hideError();
+
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showError('Please enter email and password');
+                return;
+            }
+
+            try {
+                await window.signInUser(window.firebaseAuth, email, password);
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Login error:', error);
+
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    showError('Invalid email or password');
+                } else if (error.code === 'auth/invalid-email') {
+                    showError('Invalid email address');
+                } else if (error.code === 'auth/invalid-credential') {
+                    showError('Invalid credentials');
+                } else {
+                    showError('Login failed. Try again.');
+                }
+            }
+        }
+
+        // Enter key support
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('loginForm').style.display !== 'none') {
+                    handleLogin();
+                } else {
+                    handleRegister();
+                }
+            }
+        });
+
+        // Check if already logged in
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.firebaseAuth?.currentUser) {
+                    window.location.href = 'index.html';
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
