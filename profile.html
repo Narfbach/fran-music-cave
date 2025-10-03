@@ -192,9 +192,9 @@
                     document.getElementById('rankInfo').textContent = userData.isAdmin ? 'ADMIN' : `RANK: ${rank}`;
                     document.getElementById('userRank').textContent = rank;
 
-                    // Add special styling for admin - intense neon glow effect
+                    // Add neon glow effect - admin in red, users in white
                     if (userData.isAdmin) {
-                        // Username with intense neon red glow (multiple layers)
+                        // Admin: Username with intense neon red glow (multiple layers)
                         document.getElementById('profileUsername').style.color = '#ff3366';
                         document.getElementById('profileUsername').style.textShadow = `
                             0 0 7px #ff3366,
@@ -207,7 +207,7 @@
                             0 0 151px #ff0044
                         `;
 
-                        // Rank with intense neon glow
+                        // Admin: Rank with intense neon glow
                         document.getElementById('userRank').style.color = '#ff3366';
                         document.getElementById('userRank').style.textShadow = `
                             0 0 7px #ff3366,
@@ -216,6 +216,30 @@
                             0 0 42px #ff0044,
                             0 0 82px #ff0044,
                             0 0 92px #ff0044
+                        `;
+                    } else {
+                        // Regular users: Username with white neon glow
+                        document.getElementById('profileUsername').style.color = '#fff';
+                        document.getElementById('profileUsername').style.textShadow = `
+                            0 0 7px #fff,
+                            0 0 10px #fff,
+                            0 0 21px #fff,
+                            0 0 42px #ccc,
+                            0 0 82px #ccc,
+                            0 0 92px #ccc,
+                            0 0 102px #ccc,
+                            0 0 151px #aaa
+                        `;
+
+                        // Regular users: Rank with white neon glow
+                        document.getElementById('userRank').style.color = '#fff';
+                        document.getElementById('userRank').style.textShadow = `
+                            0 0 7px #fff,
+                            0 0 10px #fff,
+                            0 0 21px #fff,
+                            0 0 42px #ccc,
+                            0 0 82px #ccc,
+                            0 0 92px #aaa
                         `;
                     }
 
