@@ -69,63 +69,63 @@ function closeUploadModal() {
 // Función para extraer metadata automáticamente
 async function extractMetadata(url) {
     try {
-        // Spotify - usar oEmbed API
+        // Spotify - scrape directly from the page
         if (url.includes('spotify.com')) {
             const match = url.match(/track\/([a-zA-Z0-9]+)/);
             if (match) {
                 const trackId = match[1];
-                const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
 
+                try {
+                    // Try to fetch the Spotify page directly
+                    const pageResponse = await fetch(`https://open.spotify.com/track/${trackId}`);
+                    const html = await pageResponse.text();
+
+                    // Extract from meta tags
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Try og:title which usually has "Song · Artist"
+                    const ogTitle = doc.querySelector('meta[property="og:title"]')?.content;
+                    const ogDescription = doc.querySelector('meta[property="og:description"]')?.content;
+
+                    console.log('Spotify og:title:', ogTitle);
+                    console.log('Spotify og:description:', ogDescription);
+
+                    if (ogTitle) {
+                        // Try to split by · (middle dot)
+                        const parts = ogTitle.split('·').map(p => p.trim());
+                        if (parts.length === 2) {
+                            return {
+                                title: parts[0],
+                                artist: parts[1]
+                            };
+                        }
+                    }
+
+                    // If og:title doesn't work, try og:description which might have artist info
+                    if (ogDescription) {
+                        // Description might be like "Artist · Song · ..."
+                        const parts = ogDescription.split('·').map(p => p.trim());
+                        if (parts.length >= 2) {
+                            return {
+                                artist: parts[0],
+                                title: parts[1]
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.log('Failed to fetch Spotify page directly, trying oEmbed');
+                }
+
+                // Fallback to oEmbed
+                const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
                 const response = await fetch(oEmbedUrl);
                 const data = await response.json();
 
-                console.log('Spotify oEmbed data:', data);
-
-                // Extract from HTML iframe if available
-                let title = data.title;
-                let artist = '';
-
-                // Check if there's a thumbnail_url or provider_name
-                if (data.provider_name) {
-                    console.log('Provider:', data.provider_name);
-                }
-
-                // Try to parse from HTML if available
-                if (data.html) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data.html, 'text/html');
-                    const iframeSrc = doc.querySelector('iframe')?.src;
-                    console.log('iframe src:', iframeSrc);
-                }
-
-                // Try multiple separator patterns
-                let titleMatch = title.match(/^(.*?)\s*·\s*(.+)$/); // "Song · Artist"
-                if (!titleMatch) {
-                    titleMatch = title.match(/^(.*?)\s+by\s+(.+)$/i); // "Song by Artist"
-                }
-                if (!titleMatch) {
-                    titleMatch = title.match(/^(.*?)\s*-\s*(.+)$/); // "Song - Artist"
-                }
-                if (!titleMatch) {
-                    titleMatch = title.match(/^(.*?)\s*–\s*(.+)$/); // "Song – Artist" (em dash)
-                }
-                if (!titleMatch) {
-                    titleMatch = title.match(/^(.*?)\s*\|\s*(.+)$/); // "Song | Artist"
-                }
-
-                if (titleMatch) {
-                    return {
-                        title: titleMatch[1].trim(),
-                        artist: titleMatch[2].trim()
-                    };
-                } else {
-                    // If no pattern matches, use the whole title
-                    console.log('No pattern matched for:', title);
-                    return {
-                        title: title,
-                        artist: artist
-                    };
-                }
+                return {
+                    title: data.title || '',
+                    artist: ''
+                };
             }
         }
 
