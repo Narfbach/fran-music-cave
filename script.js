@@ -167,6 +167,7 @@ function setupInteractions(card, trackId) {
         const isCurrentlyLiked = likedTracks.includes(trackId);
 
         const trackRef = window.chatDoc(window.chatDb, 'tracks', trackId);
+        const likeCountSpan = likeBtn.querySelector('.like-count');
 
         try {
             const docSnap = await window.chatGetDoc(trackRef);
@@ -174,25 +175,33 @@ function setupInteractions(card, trackId) {
 
             if (isCurrentlyLiked) {
                 // Quitar like
-                await window.chatUpdateDoc(trackRef, { likes: Math.max(0, currentLikes - 1) });
+                const newLikes = Math.max(0, currentLikes - 1);
+                await window.chatUpdateDoc(trackRef, { likes: newLikes });
+
+                // Actualizar UI inmediatamente
+                likeCountSpan.textContent = newLikes;
 
                 // Remover del localStorage
                 const updatedLikes = likedTracks.filter(id => id !== trackId);
                 localStorage.setItem('likedTracks', JSON.stringify(updatedLikes));
 
-                // Actualizar UI
+                // Actualizar corazón
                 likeBtn.classList.remove('liked');
                 const svg = likeBtn.querySelector('svg');
                 svg.setAttribute('fill', 'none');
             } else {
                 // Dar like
-                await window.chatUpdateDoc(trackRef, { likes: currentLikes + 1 });
+                const newLikes = currentLikes + 1;
+                await window.chatUpdateDoc(trackRef, { likes: newLikes });
+
+                // Actualizar UI inmediatamente
+                likeCountSpan.textContent = newLikes;
 
                 // Agregar al localStorage
                 likedTracks.push(trackId);
                 localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
 
-                // Actualizar UI
+                // Actualizar corazón
                 likeBtn.classList.add('liked');
                 const svg = likeBtn.querySelector('svg');
                 svg.setAttribute('fill', 'currentColor');
