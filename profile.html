@@ -177,12 +177,12 @@
         });
 
         async function loadUserProfile(user) {
-            document.getElementById('profileUsername').textContent = user.displayName || 'Anonymous';
-
             try {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+                    const username = userData.username || user.displayName || 'Anonymous';
+                    document.getElementById('profileUsername').textContent = username;
 
                     // Load custom photo if exists, otherwise show vinyl record
                     const profilePic = document.getElementById('profilePicture');
@@ -285,7 +285,7 @@
                 }
 
                 const userData = userDoc.data();
-                const username = userData.displayName || userData.email?.split('@')[0] || 'Anonymous';
+                const username = userData.username || userData.email?.split('@')[0] || 'Anonymous';
 
                 document.getElementById('profileUsername').textContent = username;
 
