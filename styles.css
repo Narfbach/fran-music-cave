@@ -33,35 +33,37 @@ nav {
 .logo {
     font-size: 0.9rem;
     font-weight: 400;
-    color: #999;
+    color: #ddd;
     letter-spacing: 3px;
     text-shadow:
-        0 0 20px rgba(153, 153, 153, 0.6),
-        0 0 40px rgba(153, 153, 153, 0.4),
-        0 0 60px rgba(153, 153, 153, 0.2);
+        0 0 30px rgba(255, 255, 255, 1),
+        0 0 60px rgba(200, 200, 200, 0.8),
+        0 0 90px rgba(150, 150, 150, 0.6),
+        0 0 120px rgba(100, 100, 100, 0.4);
     animation: neonFlicker 8s linear infinite;
 }
 
 @keyframes neonFlicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
         text-shadow:
-            0 0 20px rgba(153, 153, 153, 0.6),
-            0 0 40px rgba(153, 153, 153, 0.4),
-            0 0 60px rgba(153, 153, 153, 0.2);
-        color: #999;
+            0 0 30px rgba(255, 255, 255, 1),
+            0 0 60px rgba(200, 200, 200, 0.8),
+            0 0 90px rgba(150, 150, 150, 0.6),
+            0 0 120px rgba(100, 100, 100, 0.4);
+        color: #ddd;
         opacity: 1;
     }
     20%, 24%, 55% {
         text-shadow: none;
-        color: #333;
-        opacity: 0.3;
+        color: #222;
+        opacity: 0.2;
     }
     22% {
         text-shadow:
-            0 0 10px rgba(153, 153, 153, 0.3),
-            0 0 20px rgba(153, 153, 153, 0.2);
-        color: #666;
-        opacity: 0.6;
+            0 0 15px rgba(200, 200, 200, 0.5),
+            0 0 30px rgba(150, 150, 150, 0.3);
+        color: #888;
+        opacity: 0.5;
     }
 }
 
