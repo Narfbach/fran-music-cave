@@ -192,8 +192,13 @@
                     document.getElementById('rankInfo').textContent = userData.isAdmin ? 'ADMIN' : `RANK: ${rank}`;
                     document.getElementById('userRank').textContent = rank;
 
-                    // Add special styling for admin rank
+                    // Add special styling for admin
                     if (userData.isAdmin) {
+                        // Username in red with glow
+                        document.getElementById('profileUsername').style.color = '#ff4444';
+                        document.getElementById('profileUsername').style.textShadow = '0 0 20px rgba(255,68,68,0.6)';
+
+                        // Rank in red with glow
                         document.getElementById('userRank').style.color = '#ff4444';
                         document.getElementById('userRank').style.textShadow = '0 0 10px rgba(255,68,68,0.5)';
                     }
