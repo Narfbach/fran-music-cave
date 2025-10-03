@@ -218,10 +218,10 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
             <div class="message-avatar" style="width:32px;height:32px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
                 ${avatarHTML}
             </div>
-            <div id="${cardId}" class="message-user-card" style="display:none;position:absolute;left:100%;top:0;margin-left:.5rem;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:200px;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
+            <div id="${cardId}" class="message-user-card" style="display:none;position:absolute;bottom:100%;left:0;margin-bottom:.5rem;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:220px;z-index:2001;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
         </div>
         <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem">
+            <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem;position:relative">
                 <a href="profile.html" class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}; text-decoration:none; cursor:pointer">${username}</a>
                 <div class="chat-message-time" style="font-size:.5rem;color:#333;letter-spacing:1px">${formatTime(timestamp)}</div>
             </div>

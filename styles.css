@@ -641,8 +641,8 @@ nav {
     position: fixed;
     bottom: 0;
     right: 0;
-    width: 350px;
-    max-height: 500px;
+    width: 400px;
+    max-height: 600px;
     background: #000;
     border-left: 1px solid #1a1a1a;
     border-top: 1px solid #1a1a1a;
@@ -695,7 +695,8 @@ nav {
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
-    max-height: 350px;
+    max-height: 450px;
+    min-height: 300px;
 }
 
 .chat-messages::-webkit-scrollbar {
