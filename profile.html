@@ -187,10 +187,16 @@
                     document.getElementById('totalLikes').textContent = totalLikes;
                     document.getElementById('avgLikes').textContent = avgLikes;
 
-                    // Update rank
-                    const rank = getRank(diggerScore);
-                    document.getElementById('rankInfo').textContent = `RANK: ${rank}`;
+                    // Update rank - check if admin first
+                    const rank = userData.isAdmin ? 'ADMIN' : getRank(diggerScore);
+                    document.getElementById('rankInfo').textContent = userData.isAdmin ? 'ADMIN' : `RANK: ${rank}`;
                     document.getElementById('userRank').textContent = rank;
+
+                    // Add special styling for admin rank
+                    if (userData.isAdmin) {
+                        document.getElementById('userRank').style.color = '#ff4444';
+                        document.getElementById('userRank').style.textShadow = '0 0 10px rgba(255,68,68,0.5)';
+                    }
 
                     // Update progress bar
                     const progress = (diggerScore % 100) / 100 * 100;
