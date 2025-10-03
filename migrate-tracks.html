@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrate Tracks - The Music Cave</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: monospace;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        button {
+            background: #ff3366;
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 1rem;
+            margin: 1rem 0;
+        }
+        button:hover {
+            background: #ff0044;
+        }
+        #status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>MIGRATE TRACKS TO USER</h1>
+    <p>This will update all tracks submitted by "Fran" to be linked to your user account (narfbach@gmail.com)</p>
+    <button onclick="migrateTracks()">MIGRATE TRACKS</button>
+    <div id="status"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsy71T7M3BfNDD9h5CCijFDde7ام-LmLY",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "101732494139",
+            appId: "1:101732494139:web:5e4be5513b3e7b81eb0e08"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let userData = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user && user.email === 'narfbach@gmail.com') {
+                currentUser = user;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    userData = userDoc.data();
+                    document.getElementById('status').innerHTML = `<p style="color:#00ff00">✓ Logged in as: ${user.email}</p><p>Admin status: ${userData.isAdmin ? 'YES' : 'NO'}</p>`;
+                }
+            } else if (user) {
+                document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ You must be logged in as narfbach@gmail.com</p>`;
+            } else {
+                document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ Not logged in. Please login first.</p>`;
+            }
+        });
+
+        window.migrateTracks = async function() {
+            if (!currentUser || currentUser.email !== 'narfbach@gmail.com') {
+                alert('You must be logged in as narfbach@gmail.com');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to migrate all tracks submitted by "Fran" to your account?')) {
+                return;
+            }
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>⏳ Migrating tracks...</p>';
+
+            try {
+                // Get all tracks submitted by "Fran"
+                const tracksRef = collection(db, 'tracks');
+                const q = query(tracksRef, where('submittedBy', '==', 'Fran'));
+                const snapshot = await getDocs(q);
+
+                let updated = 0;
+                const updatePromises = [];
+
+                snapshot.forEach((docSnapshot) => {
+                    const trackRef = doc(db, 'tracks', docSnapshot.id);
+                    updatePromises.push(
+                        updateDoc(trackRef, {
+                            userId: currentUser.uid,
+                            isAdmin: userData.isAdmin || false
+                        })
+                    );
+                    updated++;
+                });
+
+                await Promise.all(updatePromises);
+
+                statusDiv.innerHTML = `
+                    <p style="color:#00ff00">✓ Migration complete!</p>
+                    <p>Tracks updated: ${updated}</p>
+                    <p>All tracks submitted by "Fran" are now linked to your account.</p>
+                `;
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<p style="color:#ff3366">✗ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
