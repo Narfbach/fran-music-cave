@@ -819,6 +819,20 @@ nav {
     display: block;
 }
 
+.vinyl-animation {
+    margin: 0 auto 1.5rem;
+    animation: vinylSpin 2s linear infinite;
+}
+
+@keyframes vinylSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .upload-success p {
     color: #666;
     font-size: 0.8rem;
@@ -826,10 +840,10 @@ nav {
     margin-bottom: 0.5rem;
 }
 
-.upload-success p:first-child {
+.upload-success p:first-of-type {
     color: #999;
     font-size: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 /* Upload Responsive */
