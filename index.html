@@ -18,7 +18,68 @@
     <div class="hero-banner">
         <h1>SELECTIONS</h1>
         <p>— SCROLL —</p>
+        <button class="upload-toggle" id="uploadToggle">SUBMIT TRACK</button>
     </div>
+
+    <!-- Upload Section -->
+    <section class="upload-section" id="uploadSection">
+        <div class="upload-container">
+            <div class="upload-header">
+                <h3>SUBMIT TRACK</h3>
+                <button class="upload-close" id="uploadClose">×</button>
+            </div>
+            <form id="uploadForm" class="upload-form">
+                <div class="form-group">
+                    <label>TRACK URL</label>
+                    <input
+                        type="url"
+                        id="trackUrl"
+                        placeholder="https://open.spotify.com/track/... or YouTube or SoundCloud"
+                        required
+                        autocomplete="off"
+                    >
+                    <small>Spotify, YouTube or SoundCloud links only</small>
+                </div>
+                <div class="form-group">
+                    <label>TRACK TITLE</label>
+                    <input
+                        type="text"
+                        id="trackTitle"
+                        placeholder="Track name"
+                        maxlength="100"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="form-group">
+                    <label>ARTIST</label>
+                    <input
+                        type="text"
+                        id="trackArtist"
+                        placeholder="Artist name"
+                        maxlength="100"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="form-group">
+                    <label>YOUR NAME (optional)</label>
+                    <input
+                        type="text"
+                        id="submitterName"
+                        placeholder="Who's submitting this?"
+                        maxlength="50"
+                        autocomplete="off"
+                    >
+                </div>
+                <button type="submit" class="submit-btn">SUBMIT</button>
+            </form>
+            <div class="upload-success" id="uploadSuccess">
+                <p>✓ Track submitted successfully!</p>
+                <p>It will be reviewed and added soon.</p>
+            </div>
+        </div>
+    </section>
 
     <main class="feed-container" id="musicFeed">
         <!-- Los tracks se cargarán aquí dinámicamente -->
@@ -91,5 +152,6 @@
 
     <script src="script.js"></script>
     <script src="chat.js"></script>
+    <script src="upload.js"></script>
 </body>
 </html>

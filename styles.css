@@ -65,6 +65,25 @@ nav {
     color: #333;
     font-size: 0.75rem;
     letter-spacing: 2px;
+    margin-bottom: 2rem;
+}
+
+.upload-toggle {
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    padding: 0.6rem 1.5rem;
+    cursor: pointer;
+    letter-spacing: 3px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+.upload-toggle:hover {
+    border-color: #333;
+    color: #999;
 }
 
 /* Feed Container */
@@ -585,5 +604,195 @@ nav {
 
     .chat-messages {
         max-height: 200px;
+    }
+}
+
+/* Upload Section */
+.upload-section {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.upload-section.active {
+    display: flex;
+}
+
+.upload-container {
+    background: #000;
+    border: 1px solid #1a1a1a;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #1a1a1a;
+}
+
+.upload-header h3 {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #666;
+    letter-spacing: 3px;
+}
+
+.upload-close {
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #666;
+    font-size: 1.5rem;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.upload-close:hover {
+    border-color: #333;
+    color: #999;
+}
+
+.upload-form {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.7rem;
+    color: #444;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.form-group input {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #999;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    padding: 0.8rem;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #333;
+}
+
+.form-group small {
+    display: block;
+    font-size: 0.65rem;
+    color: #222;
+    margin-top: 0.3rem;
+    letter-spacing: 1px;
+}
+
+.submit-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    padding: 1rem;
+    cursor: pointer;
+    letter-spacing: 3px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    margin-top: 1rem;
+}
+
+.submit-btn:hover {
+    border-color: #333;
+    color: #999;
+}
+
+.upload-success {
+    display: none;
+    padding: 2rem;
+    text-align: center;
+}
+
+.upload-success.active {
+    display: block;
+}
+
+.upload-success p {
+    color: #666;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.upload-success p:first-child {
+    color: #999;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Upload Responsive */
+@media (max-width: 768px) {
+    .upload-section {
+        padding: 1rem;
+    }
+
+    .upload-container {
+        max-height: 95vh;
+    }
+
+    .upload-form {
+        padding: 1.5rem;
+    }
+
+    .upload-toggle {
+        font-size: 0.65rem;
+        padding: 0.5rem 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .upload-header {
+        padding: 1rem;
+    }
+
+    .upload-form {
+        padding: 1rem;
+    }
+
+    .form-group input {
+        font-size: 0.7rem;
+        padding: 0.6rem;
+    }
+
+    .upload-toggle {
+        font-size: 0.6rem;
+        padding: 0.4rem 1rem;
+        letter-spacing: 2px;
     }
 }
