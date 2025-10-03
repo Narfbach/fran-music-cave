@@ -5,6 +5,38 @@ const uploadClose = document.getElementById('uploadClose');
 const uploadForm = document.getElementById('uploadForm');
 const uploadSuccess = document.getElementById('uploadSuccess');
 
+// Auto-fill metadata when URL is entered
+const trackUrlInput = document.getElementById('trackUrl');
+const trackTitleInput = document.getElementById('trackTitle');
+const trackArtistInput = document.getElementById('trackArtist');
+
+let metadataTimeout;
+
+trackUrlInput.addEventListener('input', () => {
+    clearTimeout(metadataTimeout);
+
+    metadataTimeout = setTimeout(async () => {
+        const url = trackUrlInput.value.trim();
+        if (!url) return;
+
+        // Show loading state
+        trackTitleInput.placeholder = 'Loading...';
+        trackArtistInput.placeholder = 'Loading...';
+
+        const metadata = await extractMetadata(url);
+
+        if (metadata) {
+            trackTitleInput.value = metadata.title;
+            trackArtistInput.value = metadata.artist;
+            trackTitleInput.placeholder = 'Track name';
+            trackArtistInput.placeholder = 'Artist name';
+        } else {
+            trackTitleInput.placeholder = 'Track name';
+            trackArtistInput.placeholder = 'Artist name';
+        }
+    }, 1000); // Wait 1 second after user stops typing
+});
+
 // Abrir modal de upload
 uploadToggle.addEventListener('click', () => {
     // Check if user is logged in
@@ -32,6 +64,94 @@ function closeUploadModal() {
     uploadForm.reset();
     uploadForm.style.display = 'block';
     uploadSuccess.classList.remove('active');
+}
+
+// Función para extraer metadata automáticamente
+async function extractMetadata(url) {
+    try {
+        // Spotify - usar oEmbed API
+        if (url.includes('spotify.com')) {
+            const match = url.match(/track\/([a-zA-Z0-9]+)/);
+            if (match) {
+                const trackId = match[1];
+                const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
+
+                const response = await fetch(oEmbedUrl);
+                const data = await response.json();
+
+                // Spotify oEmbed returns title in format: "Song Name" by "Artist Name"
+                const titleMatch = data.title.match(/(.*?)\s+by\s+(.*)/);
+                if (titleMatch) {
+                    return {
+                        title: titleMatch[1].trim(),
+                        artist: titleMatch[2].trim()
+                    };
+                }
+            }
+        }
+
+        // YouTube - usar oEmbed API
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let videoId;
+            if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1].split('?')[0];
+            } else {
+                const match = url.match(/[?&]v=([^&]+)/);
+                videoId = match ? match[1] : null;
+            }
+
+            if (videoId) {
+                const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+
+                const response = await fetch(oEmbedUrl);
+                const data = await response.json();
+
+                // YouTube title often in format: "Artist - Song Name" or "Song Name - Artist"
+                const title = data.title;
+                const dashMatch = title.match(/(.*?)\s*[-–—]\s*(.*)/);
+
+                if (dashMatch) {
+                    return {
+                        title: dashMatch[2].trim(),
+                        artist: dashMatch[1].trim()
+                    };
+                } else {
+                    return {
+                        title: title,
+                        artist: data.author_name || ''
+                    };
+                }
+            }
+        }
+
+        // SoundCloud - usar oEmbed API
+        if (url.includes('soundcloud.com')) {
+            const oEmbedUrl = `https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+
+            const response = await fetch(oEmbedUrl);
+            const data = await response.json();
+
+            // SoundCloud title often in format: "Artist - Song Name"
+            const title = data.title;
+            const dashMatch = title.match(/(.*?)\s*[-–—]\s*(.*)/);
+
+            if (dashMatch) {
+                return {
+                    artist: dashMatch[1].trim(),
+                    title: dashMatch[2].trim()
+                };
+            } else {
+                return {
+                    title: title,
+                    artist: data.author_name || ''
+                };
+            }
+        }
+    } catch (error) {
+        console.error('Error extracting metadata:', error);
+    }
+
+    return null;
 }
 
 // Función para detectar plataforma y convertir URL
