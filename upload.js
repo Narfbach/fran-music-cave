@@ -69,63 +69,67 @@ function closeUploadModal() {
 // Función para extraer metadata automáticamente
 async function extractMetadata(url) {
     try {
-        // Spotify - scrape directly from the page
+        // Spotify - use CORS proxy to fetch metadata
         if (url.includes('spotify.com')) {
             const match = url.match(/track\/([a-zA-Z0-9]+)/);
             if (match) {
                 const trackId = match[1];
 
                 try {
-                    // Try to fetch the Spotify page directly
-                    const pageResponse = await fetch(`https://open.spotify.com/track/${trackId}`);
-                    const html = await pageResponse.text();
+                    // Use allorigins.win as CORS proxy
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://open.spotify.com/track/${trackId}`)}`;
+                    const response = await fetch(proxyUrl);
+                    const data = await response.json();
 
-                    // Extract from meta tags
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
+                    if (data.contents) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data.contents, 'text/html');
 
-                    // Try og:title which usually has "Song · Artist"
-                    const ogTitle = doc.querySelector('meta[property="og:title"]')?.content;
-                    const ogDescription = doc.querySelector('meta[property="og:description"]')?.content;
+                        // Try og:title which usually has "Song · Artist"
+                        const ogTitle = doc.querySelector('meta[property="og:title"]')?.content;
+                        console.log('Spotify og:title:', ogTitle);
 
-                    console.log('Spotify og:title:', ogTitle);
-                    console.log('Spotify og:description:', ogDescription);
-
-                    if (ogTitle) {
-                        // Try to split by · (middle dot)
-                        const parts = ogTitle.split('·').map(p => p.trim());
-                        if (parts.length === 2) {
-                            return {
-                                title: parts[0],
-                                artist: parts[1]
-                            };
+                        if (ogTitle) {
+                            // Try to split by · (middle dot)
+                            const parts = ogTitle.split('·').map(p => p.trim());
+                            if (parts.length >= 2) {
+                                return {
+                                    title: parts[0],
+                                    artist: parts[1]
+                                };
+                            }
                         }
-                    }
 
-                    // If og:title doesn't work, try og:description which might have artist info
-                    if (ogDescription) {
-                        // Description might be like "Artist · Song · ..."
-                        const parts = ogDescription.split('·').map(p => p.trim());
-                        if (parts.length >= 2) {
-                            return {
-                                artist: parts[0],
-                                title: parts[1]
-                            };
+                        // Try title tag as fallback
+                        const titleTag = doc.querySelector('title')?.textContent;
+                        if (titleTag) {
+                            console.log('Spotify title tag:', titleTag);
+                            const parts = titleTag.split(' - ').map(p => p.trim());
+                            if (parts.length >= 2) {
+                                return {
+                                    title: parts[1],
+                                    artist: parts[0]
+                                };
+                            }
                         }
                     }
                 } catch (error) {
-                    console.log('Failed to fetch Spotify page directly, trying oEmbed');
+                    console.log('Failed to fetch via proxy:', error);
                 }
 
-                // Fallback to oEmbed
-                const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
-                const response = await fetch(oEmbedUrl);
-                const data = await response.json();
+                // Fallback to oEmbed (only has song name, no artist)
+                try {
+                    const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
+                    const response = await fetch(oEmbedUrl);
+                    const data = await response.json();
 
-                return {
-                    title: data.title || '',
-                    artist: ''
-                };
+                    return {
+                        title: data.title || '',
+                        artist: ''
+                    };
+                } catch (error) {
+                    console.log('oEmbed also failed:', error);
+                }
             }
         }
 
