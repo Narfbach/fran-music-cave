@@ -254,8 +254,17 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
                 const rank = getRank(userData.diggerScore || 0);
                 const displayRank = isAdmin ? 'ADMIN' : rank;
 
-                const cardAvatarHTML = photoURL
-                    ? `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
+                // Use current photoURL from Firestore instead of the one from message
+                const currentPhotoURL = userData.photoURL || null;
+
+                // Update message avatar with current photo
+                const messageAvatar = avatar.querySelector('img') || avatar;
+                if (currentPhotoURL) {
+                    avatar.innerHTML = `<img src="${currentPhotoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`;
+                }
+
+                const cardAvatarHTML = currentPhotoURL
+                    ? `<img src="${currentPhotoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
                     : defaultAvatar.replace('32', '50');
 
                 const rankColor = isAdmin ? '#ff3366' : '#999';
