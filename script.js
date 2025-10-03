@@ -1,42 +1,47 @@
-// Music tracks data
-const musicTracks = [
-    {
-        title: "Round 1",
-        artist: "Estella Boersma",
-        platform: "spotify",
-        embedUrl: "https://open.spotify.com/embed/track/3RLG2UI8wEu1Rnf80Vg7xN"
-    },
-    {
-        title: "Street Funk",
-        artist: "West Code",
-        platform: "spotify",
-        embedUrl: "https://open.spotify.com/embed/track/7y2pM8ZmH3fvcc6nyLZsbn"
-    },
-    {
-        title: "russian porn magazine",
-        artist: "Vladimir Dubyshkin",
-        platform: "spotify",
-        embedUrl: "https://open.spotify.com/embed/track/764FhIvhhpu1Krl2DOQTLK"
-    },
-    {
-        title: "Daily Prayer",
-        artist: "Mr. G",
-        platform: "spotify",
-        embedUrl: "https://open.spotify.com/embed/track/64FyP2IcDx6cgyZUUSIPYa"
-    },
-    {
-        title: "Valley of the Shadows",
-        artist: "Origin Unknown",
-        platform: "spotify",
-        embedUrl: "https://open.spotify.com/embed/track/6fzwardfFs6sVfNA5R1ypt"
-    }
-];
+// Music tracks data - Se cargará desde Firebase
+let musicTracks = [];
+let allTracksLoaded = false;
 
 // Variables para infinite scroll
 let currentIndex = 0;
 const tracksPerLoad = 3;
 const feedContainer = document.getElementById('musicFeed');
 const loading = document.getElementById('loading');
+
+// Cargar tracks desde Firebase
+async function loadTracksFromFirebase() {
+    if (!window.chatDb) {
+        console.log('Waiting for Firebase...');
+        setTimeout(loadTracksFromFirebase, 500);
+        return;
+    }
+
+    try {
+        const tracksRef = window.chatCollection(window.chatDb, 'tracks');
+        const q = window.chatQuery(
+            tracksRef,
+            window.chatOrderBy('timestamp', 'desc')
+        );
+
+        // Escuchar cambios en tiempo real
+        window.chatOnSnapshot(q, (snapshot) => {
+            musicTracks = [];
+            snapshot.forEach((doc) => {
+                musicTracks.push(doc.data());
+            });
+
+            // Si es la primera carga, mostrar tracks
+            if (!allTracksLoaded) {
+                allTracksLoaded = true;
+                feedContainer.innerHTML = '';
+                currentIndex = 0;
+                loadMoreTracks();
+            }
+        });
+    } catch (error) {
+        console.error('Error loading tracks:', error);
+    }
+}
 
 // Función para crear una tarjeta de track
 function createTrackCard(track) {
@@ -107,25 +112,7 @@ function handleScroll() {
 // Event listeners
 window.addEventListener('scroll', handleScroll);
 
-// Carga inicial
-loadMoreTracks();
-
-// INSTRUCCIONES PARA AGREGAR TUS TRACKS:
-//
-// SPOTIFY:
-// 1. Abre el track en Spotify web
-// 2. Click en "..." > "Share" > "Embed track"
-// 3. Copia el URL del src (ejemplo: https://open.spotify.com/embed/track/XXXXXX)
-// 4. Agrega al array: { title: "Nombre", artist: "Artista", platform: "spotify", embedUrl: "URL_COPIADO" }
-//
-// SOUNDCLOUD:
-// 1. Abre el track en SoundCloud
-// 2. Click en "Share" > "Embed"
-// 3. Copia el URL del src del iframe
-// 4. Agrega al array: { title: "Nombre", artist: "Artista", platform: "soundcloud", embedUrl: "URL_COPIADO" }
-//
-// YOUTUBE:
-// 1. Abre el video en YouTube
-// 2. Click en "Share" > "Embed"
-// 3. Copia el URL (https://www.youtube.com/embed/VIDEO_ID)
-// 4. Agrega al array: { title: "Nombre", artist: "Artista", platform: "youtube", embedUrl: "URL_COPIADO" }
+// Iniciar carga desde Firebase
+window.addEventListener('load', () => {
+    setTimeout(loadTracksFromFirebase, 500);
+});

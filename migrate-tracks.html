@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrate Tracks to Firebase</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+        }
+        button {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #999;
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 2rem;
+        }
+        button:hover {
+            border-color: #666;
+            color: #fff;
+        }
+        #result {
+            margin-top: 2rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>MIGRATE TRACKS TO FIREBASE</h1>
+    <p>Click the button to migrate your existing tracks to Firebase</p>
+    <button onclick="migrateTracks()">MIGRATE NOW</button>
+    <div id="result"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "518773964413",
+            appId: "1:518773964413:web:46f3b94fb6db076c323b14",
+            measurementId: "G-3NN8Q90FX8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const existingTracks = [
+            {
+                title: "Round 1",
+                artist: "Estella Boersma",
+                platform: "spotify",
+                embedUrl: "https://open.spotify.com/embed/track/3RLG2UI8wEu1Rnf80Vg7xN"
+            },
+            {
+                title: "Street Funk",
+                artist: "West Code",
+                platform: "spotify",
+                embedUrl: "https://open.spotify.com/embed/track/7y2pM8ZmH3fvcc6nyLZsbn"
+            },
+            {
+                title: "russian porn magazine",
+                artist: "Vladimir Dubyshkin",
+                platform: "spotify",
+                embedUrl: "https://open.spotify.com/embed/track/764FhIvhhpu1Krl2DOQTLK"
+            },
+            {
+                title: "Daily Prayer",
+                artist: "Mr. G",
+                platform: "spotify",
+                embedUrl: "https://open.spotify.com/embed/track/64FyP2IcDx6cgyZUUSIPYa"
+            },
+            {
+                title: "Valley of the Shadows",
+                artist: "Origin Unknown",
+                platform: "spotify",
+                embedUrl: "https://open.spotify.com/embed/track/6fzwardfFs6sVfNA5R1ypt"
+            }
+        ];
+
+        window.migrateTracks = async function() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Migrating tracks...';
+
+            try {
+                for (const track of existingTracks) {
+                    await addDoc(collection(db, 'tracks'), {
+                        ...track,
+                        submittedBy: 'Fran',
+                        timestamp: serverTimestamp()
+                    });
+                }
+
+                resultDiv.innerHTML = `
+                    ✓ Successfully migrated ${existingTracks.length} tracks!<br><br>
+                    You can now close this page and refresh your main site.<br>
+                    All tracks will load automatically from Firebase.
+                `;
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        };
+    </script>
+</body>
+</html>

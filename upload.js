@@ -92,26 +92,24 @@ uploadForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        // Guardar en Firebase en colección "submissions" (pendientes de aprobación)
-        await window.chatAddDoc(window.chatCollection(window.chatDb, 'submissions'), {
+        // Guardar directamente en la colección "tracks" (publicación automática)
+        await window.chatAddDoc(window.chatCollection(window.chatDb, 'tracks'), {
             title: trackTitle,
             artist: trackArtist,
             platform: trackData.platform,
             embedUrl: trackData.embedUrl,
-            originalUrl: trackUrl,
             submittedBy: submitterName || 'Anonymous',
-            timestamp: window.chatServerTimestamp(),
-            status: 'pending'
+            timestamp: window.chatServerTimestamp()
         });
 
         // Mostrar mensaje de éxito
         uploadForm.style.display = 'none';
         uploadSuccess.classList.add('active');
 
-        // Cerrar automáticamente después de 3 segundos
+        // Cerrar automáticamente después de 2 segundos
         setTimeout(() => {
             closeUploadModal();
-        }, 3000);
+        }, 2000);
 
     } catch (error) {
         console.error('Error submitting track:', error);
