@@ -135,9 +135,12 @@ function createTrackCard(track) {
             <div class="track-artist">${track.artist}</div>
             <div class="track-meta">
                 <span class="track-platform ${platformClass}">${platformName}</span>
-                <span class="track-submitter" style="position:relative">
-                    shared by
-                    <a href="profile.html" class="track-username" style="color:${userColor};text-shadow:${userShadow};text-decoration:none;cursor:pointer">${submittedBy}</a>
+                <span class="track-submitter" style="position:relative;display:flex;align-items:center;gap:0.5rem">
+                    <span style="color:#999">shared by</span>
+                    <div class="track-user-info" style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
+                        <div class="track-user-avatar" style="width:24px;height:24px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center"></div>
+                        <a href="profile.html" class="track-username" style="color:${userColor};text-shadow:${userShadow};text-decoration:none;cursor:pointer">${submittedBy}</a>
+                    </div>
                     <div id="${userCardId}" class="track-user-card" style="display:none;position:fixed;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:220px;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
                 </span>
             </div>
@@ -226,13 +229,32 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
             <circle cx="50" cy="50" r="3" fill="#000"/>
         </svg>`;
 
+        const smallAvatar = `<svg width="24" height="24" viewBox="0 0 100 100" style="opacity:0.3">
+            <circle cx="50" cy="50" r="45" fill="#111"/>
+            <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+            <circle cx="50" cy="50" r="30" fill="#111"/>
+            <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+            <circle cx="50" cy="50" r="8" fill="#222"/>
+            <circle cx="50" cy="50" r="3" fill="#000"/>
+        </svg>`;
+
         const cardAvatarHTML = photoURL
             ? `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
             : defaultAvatar;
 
+        const smallAvatarHTML = photoURL
+            ? `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
+            : smallAvatar;
+
         const rankColor = isAdmin ? '#ff3366' : '#999';
         const userNameColor = isAdmin ? '#ff3366' : '#fff';
         const userNameShadow = isAdmin ? '0 0 7px #ff3366, 0 0 10px #ff3366' : '0 0 7px #fff, 0 0 10px #fff';
+
+        // Set small avatar in track meta
+        const trackAvatar = card.querySelector('.track-user-avatar');
+        if (trackAvatar) {
+            trackAvatar.innerHTML = smallAvatarHTML;
+        }
 
         const userCard = card.querySelector(`#${userCardId}`);
         userCard.innerHTML = `
@@ -251,11 +273,12 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
             </div>
         `;
 
-        // Setup hover
+        // Setup hover for both username and avatar
         const usernameLink = card.querySelector('.track-username');
+        const userInfo = card.querySelector('.track-user-info');
 
         const showCard = () => {
-            const rect = usernameLink.getBoundingClientRect();
+            const rect = userInfo.getBoundingClientRect();
             userCard.style.display = 'block';
             userCard.style.left = `${rect.left}px`;
             userCard.style.top = `${rect.bottom + 10}px`;
@@ -265,8 +288,8 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
             userCard.style.display = 'none';
         };
 
-        usernameLink.addEventListener('mouseenter', showCard);
-        usernameLink.addEventListener('mouseleave', hideCard);
+        userInfo.addEventListener('mouseenter', showCard);
+        userInfo.addEventListener('mouseleave', hideCard);
         userCard.addEventListener('mouseenter', () => userCard.style.display = 'block');
         userCard.addEventListener('mouseleave', hideCard);
 
