@@ -100,20 +100,27 @@
 
                 let fixed = 0;
                 const updatePromises = [];
+                let details = [];
 
                 snapshot.forEach((docSnapshot) => {
                     const userData = docSnapshot.data();
+                    const currentUsername = userData.username;
+                    const email = userData.email;
 
-                    // If username is missing or is an email
-                    if (!userData.username || userData.username.includes('@')) {
-                        const newUsername = userData.email ? userData.email.split('@')[0] : 'Anonymous';
+                    // If username is missing, empty, or is an email
+                    if (!currentUsername || currentUsername.trim() === '' || currentUsername.includes('@')) {
+                        const newUsername = email ? email.split('@')[0] : 'Anonymous';
 
                         updatePromises.push(
                             updateDoc(doc(db, 'users', docSnapshot.id), {
                                 username: newUsername
                             })
                         );
+
+                        details.push(`${email}: "${currentUsername}" → "${newUsername}"`);
                         fixed++;
+                    } else {
+                        details.push(`${email}: OK (${currentUsername})`);
                     }
                 });
 
@@ -122,7 +129,11 @@
                 statusDiv.innerHTML = `
                     <p style="color:#00ff00">✓ Fix complete!</p>
                     <p>Users fixed: ${fixed}</p>
-                    <p>All users now have proper usernames.</p>
+                    <p>Total users: ${snapshot.size}</p>
+                    <details style="margin-top:1rem">
+                        <summary>Details</summary>
+                        <pre style="font-size:0.8rem;margin-top:0.5rem">${details.join('\n')}</pre>
+                    </details>
                 `;
 
             } catch (error) {
