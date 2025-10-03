@@ -56,11 +56,16 @@ function createTrackCard(track) {
     if (track.platform === 'soundcloud') iframeHeight = '166';
     if (track.platform === 'youtube') iframeHeight = '315';
 
+    const submittedBy = track.submittedBy || 'Anonymous';
+
     card.innerHTML = `
         <div class="track-header">
             <div class="track-title">${track.title}</div>
             <div class="track-artist">${track.artist}</div>
-            <span class="track-platform ${platformClass}">${platformName}</span>
+            <div class="track-meta">
+                <span class="track-platform ${platformClass}">${platformName}</span>
+                <span class="track-submitter">shared by ${submittedBy}</span>
+            </div>
         </div>
         <div class="track-player">
             <iframe

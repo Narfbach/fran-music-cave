@@ -123,6 +123,14 @@ nav {
     color: #444;
     font-size: 0.8rem;
     letter-spacing: 2px;
+    margin-bottom: 0.8rem;
+}
+
+.track-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .track-platform {
@@ -132,9 +140,14 @@ nav {
     font-size: 0.65rem;
     font-weight: 400;
     text-transform: uppercase;
-    margin-top: 0.8rem;
     letter-spacing: 2px;
     background: transparent;
+}
+
+.track-submitter {
+    font-size: 0.65rem;
+    color: #222;
+    letter-spacing: 1px;
 }
 
 .platform-spotify {
