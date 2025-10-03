@@ -47,10 +47,9 @@
         <div class="profile-header">
             <div style="position:relative;display:inline-block;margin-bottom:1.5rem">
                 <div id="profilePicture" style="width:120px;height:120px;border-radius:50%;border:2px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:3rem;color:#333;margin:0 auto">
-                    ?
+                    <div style="font-size:1rem;color:#666">Loading...</div>
                 </div>
-                <button onclick="document.getElementById('photoUpload').click()" class="photo-upload-btn">📷</button>
-                <input type="file" id="photoUpload" accept="image/jpeg,image/png,image/jpg,image/webp,image/gif" style="display:none">
+                <a href="https://gravatar.com" target="_blank" class="photo-upload-btn" title="Change on Gravatar.com">🎨</a>
             </div>
             <div class="profile-username" id="profileUsername">...</div>
             <div class="profile-joined" id="profileJoined">MEMBER SINCE ...</div>
@@ -122,12 +121,14 @@
         </div>
     </div>
 
+    <!-- MD5 for Gravatar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
@@ -142,9 +143,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
-
-        let currentUser = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -152,28 +150,27 @@
                 return;
             }
 
-            currentUser = user;
-
             // Load user profile
             loadUserProfile(user);
             loadUserTracks(user.uid);
-
-            // Setup photo upload
-            setupPhotoUpload(user);
         });
+
+        // Generate Gravatar URL from email
+        function getGravatarUrl(email) {
+            const emailHash = md5(email.toLowerCase().trim());
+            // d=identicon generates unique geometric patterns
+            // d=robohash generates unique robot avatars (also cool!)
+            // d=retro generates 8-bit style avatars
+            return `https://www.gravatar.com/avatar/${emailHash}?s=200&d=identicon`;
+        }
 
         async function loadUserProfile(user) {
             document.getElementById('profileUsername').textContent = user.displayName || 'Anonymous';
 
-            // Load profile picture
-            if (user.photoURL) {
-                const profilePic = document.getElementById('profilePicture');
-                profilePic.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
-            } else {
-                // Default avatar with first letter
-                const firstLetter = (user.displayName || user.email).charAt(0).toUpperCase();
-                document.getElementById('profilePicture').textContent = firstLetter;
-            }
+            // Load Gravatar profile picture
+            const gravatarUrl = getGravatarUrl(user.email);
+            const profilePic = document.getElementById('profilePicture');
+            profilePic.innerHTML = `<img src="${gravatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="Profile picture">`;
 
             try {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -291,58 +288,6 @@
                     `;
                     tracksList.appendChild(trackDiv);
                 });
-            });
-        }
-
-        function setupPhotoUpload(user) {
-            const photoUpload = document.getElementById('photoUpload');
-
-            photoUpload.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                // Validate file
-                const maxSize = 5 * 1024 * 1024; // 5MB
-                if (file.size > maxSize) {
-                    alert('Image too large. Max size is 5MB');
-                    return;
-                }
-
-                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif'];
-                if (!validTypes.includes(file.type)) {
-                    alert('Invalid file type. Use JPG, PNG, WEBP or GIF');
-                    return;
-                }
-
-                try {
-                    // Show loading state
-                    const profilePic = document.getElementById('profilePicture');
-                    profilePic.innerHTML = '<div style="font-size:1rem;color:#666">Uploading...</div>';
-
-                    // Upload to Firebase Storage
-                    const storageRef = ref(storage, `profile-pictures/${user.uid}`);
-                    await uploadBytes(storageRef, file);
-
-                    // Get download URL
-                    const photoURL = await getDownloadURL(storageRef);
-
-                    // Update user profile
-                    await updateProfile(auth.currentUser, { photoURL });
-
-                    // Update Firestore
-                    await updateDoc(doc(db, 'users', user.uid), { photoURL });
-
-                    // Update UI
-                    profilePic.innerHTML = `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover">`;
-
-                    alert('Profile picture updated!');
-                } catch (error) {
-                    console.error('Error uploading photo:', error);
-                    alert('Error uploading photo. Try again.');
-
-                    // Restore previous state
-                    loadUserProfile(currentUser);
-                }
             });
         }
     </script>
