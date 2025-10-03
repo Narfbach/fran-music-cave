@@ -63,6 +63,10 @@ function createTrackCard(track) {
     const trackId = track.id;
     const likes = track.likes || 0;
 
+    // Verificar si el usuario ya dio like
+    const likedTracks = JSON.parse(localStorage.getItem('likedTracks') || '[]');
+    const isLiked = likedTracks.includes(trackId);
+
     card.innerHTML = `
         <div class="track-header">
             <div class="track-title">${track.title}</div>
@@ -82,8 +86,8 @@ function createTrackCard(track) {
             </iframe>
         </div>
         <div class="track-interactions">
-            <button class="like-btn" data-track-id="${trackId}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="like-btn ${isLiked ? 'liked' : ''}" data-track-id="${trackId}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
                 <span class="like-count">${likes}</span>
@@ -158,11 +162,41 @@ function setupInteractions(card, trackId) {
     likeBtn.addEventListener('click', async () => {
         if (!window.chatDb) return;
 
+        // Obtener likes guardados localmente
+        const likedTracks = JSON.parse(localStorage.getItem('likedTracks') || '[]');
+        const isCurrentlyLiked = likedTracks.includes(trackId);
+
         const trackRef = window.chatDoc(window.chatDb, 'tracks', trackId);
+
         try {
             const docSnap = await window.chatGetDoc(trackRef);
             const currentLikes = docSnap.data().likes || 0;
-            await window.chatUpdateDoc(trackRef, { likes: currentLikes + 1 });
+
+            if (isCurrentlyLiked) {
+                // Quitar like
+                await window.chatUpdateDoc(trackRef, { likes: Math.max(0, currentLikes - 1) });
+
+                // Remover del localStorage
+                const updatedLikes = likedTracks.filter(id => id !== trackId);
+                localStorage.setItem('likedTracks', JSON.stringify(updatedLikes));
+
+                // Actualizar UI
+                likeBtn.classList.remove('liked');
+                const svg = likeBtn.querySelector('svg');
+                svg.setAttribute('fill', 'none');
+            } else {
+                // Dar like
+                await window.chatUpdateDoc(trackRef, { likes: currentLikes + 1 });
+
+                // Agregar al localStorage
+                likedTracks.push(trackId);
+                localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
+
+                // Actualizar UI
+                likeBtn.classList.add('liked');
+                const svg = likeBtn.querySelector('svg');
+                svg.setAttribute('fill', 'currentColor');
+            }
         } catch (error) {
             console.error('Error liking track:', error);
         }

@@ -271,9 +271,18 @@ nav {
     color: #999;
 }
 
+.like-btn.liked {
+    color: #ff6b9d;
+}
+
+.like-btn.liked:hover {
+    color: #ff85ad;
+}
+
 .like-btn svg,
 .comment-btn svg {
     stroke: currentColor;
+    transition: all 0.3s;
 }
 
 .like-count {
