@@ -53,15 +53,15 @@
             <div class="stats" id="stats">
                 <div class="stat-card">
                     <h3>TOTAL TRACKS</h3>
-                    <p id="totalTracks">0</p>
+                    <p id="totalTracks">...</p>
                 </div>
                 <div class="stat-card">
                     <h3>TOTAL LIKES</h3>
-                    <p id="totalLikes">0</p>
+                    <p id="totalLikes">...</p>
                 </div>
                 <div class="stat-card">
                     <h3>TOTAL COMMENTS</h3>
-                    <p id="totalComments">0</p>
+                    <p id="totalComments">...</p>
                 </div>
             </div>
 
@@ -121,8 +121,20 @@
         function showAdminPanel() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('adminContent').classList.add('active');
-            loadTracks();
-            loadStats();
+
+            // Wait for Firebase to be ready
+            function initAdmin() {
+                if (!window.adminDb) {
+                    console.log('Waiting for Firebase...');
+                    setTimeout(initAdmin, 200);
+                    return;
+                }
+                console.log('Firebase ready, loading data...');
+                loadTracks();
+                loadStats();
+            }
+
+            initAdmin();
         }
 
         async function loadTracks() {
@@ -159,24 +171,35 @@
         }
 
         async function loadStats() {
-            if (!window.adminDb) return;
+            if (!window.adminDb) {
+                setTimeout(loadStats, 500);
+                return;
+            }
 
-            const tracksRef = window.adminCollection(window.adminDb, 'tracks');
-            const tracksSnapshot = await window.adminGetCountFromServer(tracksRef);
-            document.getElementById('totalTracks').textContent = tracksSnapshot.data().count;
+            try {
+                const tracksRef = window.adminCollection(window.adminDb, 'tracks');
+                const tracksSnapshot = await window.adminGetCountFromServer(tracksRef);
+                document.getElementById('totalTracks').textContent = tracksSnapshot.data().count;
 
-            // Calcular total de likes
-            const q = window.adminQuery(tracksRef);
-            window.adminOnSnapshot(q, (snapshot) => {
-                let totalLikes = 0;
-                snapshot.forEach((doc) => {
-                    totalLikes += doc.data().likes || 0;
+                // Calcular total de likes
+                const q = window.adminQuery(tracksRef);
+                window.adminOnSnapshot(q, (snapshot) => {
+                    let totalLikes = 0;
+                    let totalTracks = 0;
+                    snapshot.forEach((doc) => {
+                        totalLikes += doc.data().likes || 0;
+                        totalTracks++;
+                    });
+                    document.getElementById('totalLikes').textContent = totalLikes;
+                    document.getElementById('totalTracks').textContent = totalTracks;
                 });
-                document.getElementById('totalLikes').textContent = totalLikes;
-            });
 
-            // Total de comentarios (aproximado)
-            document.getElementById('totalComments').textContent = '-';
+                // Total de comentarios (aproximado)
+                document.getElementById('totalComments').textContent = '-';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                setTimeout(loadStats, 1000);
+            }
         }
 
         async function deleteTrack(trackId) {
