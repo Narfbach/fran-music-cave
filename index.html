@@ -141,7 +141,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // Configuración de Firebase
         const firebaseConfig = {
@@ -166,6 +166,9 @@
         window.chatLimit = limit;
         window.chatOnSnapshot = onSnapshot;
         window.chatServerTimestamp = serverTimestamp;
+        window.chatDoc = doc;
+        window.chatGetDoc = getDoc;
+        window.chatUpdateDoc = updateDoc;
     </script>
 
     <script src="script.js"></script>

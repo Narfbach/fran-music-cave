@@ -244,6 +244,127 @@ nav {
     opacity: 1;
 }
 
+/* Track Interactions */
+.track-interactions {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid #0a0a0a;
+}
+
+.like-btn,
+.comment-btn {
+    background: transparent;
+    border: none;
+    color: #444;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+}
+
+.like-btn:hover,
+.comment-btn:hover {
+    color: #999;
+}
+
+.like-btn svg,
+.comment-btn svg {
+    stroke: currentColor;
+}
+
+.like-count {
+    font-size: 0.75rem;
+    color: #333;
+}
+
+/* Comments Section */
+.track-comments {
+    border-top: 1px solid #0a0a0a;
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.comments-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.comments-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+    background: #000;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+    background: #1a1a1a;
+}
+
+.comment-item {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #0a0a0a;
+}
+
+.comment-user {
+    display: block;
+    font-size: 0.7rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+    letter-spacing: 1px;
+}
+
+.comment-text {
+    display: block;
+    font-size: 0.75rem;
+    color: #999;
+    line-height: 1.4;
+}
+
+.comment-input-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.comment-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #999;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    padding: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: #333;
+}
+
+.comment-send {
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+.comment-send:hover {
+    border-color: #333;
+    color: #999;
+}
+
 /* Loading Spinner */
 .loading {
     text-align: center;
