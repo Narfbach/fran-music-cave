@@ -246,6 +246,14 @@
         </div>
     </section>
 
+    <!-- Redirect from index.html to root -->
+    <script>
+        // If URL contains index.html, redirect to root
+        if (window.location.pathname.endsWith('index.html')) {
+            window.location.replace(window.location.pathname.replace('index.html', ''));
+        }
+    </script>
+
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
