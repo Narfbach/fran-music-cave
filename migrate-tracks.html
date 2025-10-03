@@ -36,12 +36,22 @@
 <body>
     <h1>MIGRATE TRACKS TO USER</h1>
     <p>This will update all tracks submitted by "Fran" to be linked to your user account (narfbach@gmail.com)</p>
-    <button onclick="migrateTracks()">MIGRATE TRACKS</button>
+
+    <div id="loginSection">
+        <input type="email" id="email" placeholder="Email" value="narfbach@gmail.com" style="width:300px;padding:0.5rem;background:#1a1a1a;border:1px solid #333;color:#fff;font-family:monospace;margin-right:0.5rem">
+        <input type="password" id="password" placeholder="Password" style="width:300px;padding:0.5rem;background:#1a1a1a;border:1px solid #333;color:#fff;font-family:monospace;margin-right:0.5rem">
+        <button onclick="login()">LOGIN</button>
+    </div>
+
+    <div id="migrateSection" style="display:none">
+        <button onclick="migrateTracks()">MIGRATE TRACKS</button>
+    </div>
+
     <div id="status"></div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -61,23 +71,34 @@
         let userData = null;
 
         onAuthStateChanged(auth, async (user) => {
-            if (user && user.email === 'narfbach@gmail.com') {
+            if (user) {
                 currentUser = user;
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     userData = userDoc.data();
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('migrateSection').style.display = 'block';
                     document.getElementById('status').innerHTML = `<p style="color:#00ff00">✓ Logged in as: ${user.email}</p><p>Admin status: ${userData.isAdmin ? 'YES' : 'NO'}</p>`;
                 }
-            } else if (user) {
-                document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ You must be logged in as narfbach@gmail.com</p>`;
-            } else {
-                document.getElementById('status').innerHTML = `<p style="color:#ff3366">✗ Not logged in. Please login first.</p>`;
             }
         });
 
+        window.login = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('status');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                statusDiv.innerHTML = '<p style="color:#00ff00">✓ Login successful!</p>';
+            } catch (error) {
+                statusDiv.innerHTML = `<p style="color:#ff3366">✗ Error: ${error.message}</p>`;
+            }
+        }
+
         window.migrateTracks = async function() {
-            if (!currentUser || currentUser.email !== 'narfbach@gmail.com') {
-                alert('You must be logged in as narfbach@gmail.com');
+            if (!currentUser) {
+                alert('You must be logged in');
                 return;
             }
 
@@ -114,6 +135,7 @@
                     <p style="color:#00ff00">✓ Migration complete!</p>
                     <p>Tracks updated: ${updated}</p>
                     <p>All tracks submitted by "Fran" are now linked to your account.</p>
+                    <p>Refresh the main page to see the changes.</p>
                 `;
 
             } catch (error) {
