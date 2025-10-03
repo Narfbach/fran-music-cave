@@ -283,12 +283,10 @@ async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
         }
 
         const showCard = (e) => {
+            const rect = trackAvatarEl.getBoundingClientRect();
             userCard.style.display = 'block';
-            setTimeout(() => {
-                const rect = trackAvatarEl.getBoundingClientRect();
-                userCard.style.left = `${rect.left}px`;
-                userCard.style.top = `${rect.top - userCard.offsetHeight - 10}px`;
-            }, 0);
+            userCard.style.left = `${rect.left}px`;
+            userCard.style.top = `${rect.bottom + 10}px`;
         };
 
         const hideCard = () => {
