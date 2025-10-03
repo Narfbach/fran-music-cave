@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Fran's Music Cave</title>
+    <link rel="stylesheet" href="styles.min.css">
+    <style>
+        .profile-container{max-width:900px;margin:100px auto;padding:2rem}
+        .profile-header{text-align:center;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid #1a1a1a}
+        .profile-username{font-size:2rem;color:#999;letter-spacing:6px;margin-bottom:1rem}
+        .profile-joined{font-size:.7rem;color:#444;letter-spacing:2px}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:3rem}
+        .stat-box{background:#0a0a0a;border:1px solid #1a1a1a;padding:2rem;text-align:center;transition:all .3s}
+        .stat-box:hover{border-color:#333}
+        .stat-label{font-size:.7rem;color:#444;letter-spacing:3px;margin-bottom:.8rem;text-transform:uppercase}
+        .stat-value{font-size:2.5rem;color:#999;letter-spacing:4px;font-weight:400}
+        .stat-rank{font-size:.65rem;color:#666;letter-spacing:2px;margin-top:.5rem}
+        .section-title{font-size:1rem;color:#666;letter-spacing:4px;margin-bottom:1.5rem;text-transform:uppercase;border-bottom:1px solid #1a1a1a;padding-bottom:1rem}
+        .badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:3rem}
+        .badge{background:#0a0a0a;border:1px solid #1a1a1a;padding:1.5rem;text-align:center;transition:all .3s;position:relative}
+        .badge.locked{opacity:.3;filter:grayscale(1)}
+        .badge:hover:not(.locked){border-color:#333;transform:translateY(-2px)}
+        .badge-icon{font-size:2rem;margin-bottom:.8rem}
+        .badge-name{font-size:.7rem;color:#666;letter-spacing:2px;text-transform:uppercase}
+        .badge-desc{font-size:.6rem;color:#444;letter-spacing:1px;margin-top:.5rem}
+        .badge-unlock{position:absolute;top:5px;right:5px;font-size:.5rem;color:#4CAF50}
+        .tracks-list{margin-bottom:3rem}
+        .profile-track{background:#0a0a0a;border:1px solid #1a1a1a;padding:1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
+        .track-info-profile h3{color:#999;font-size:.9rem;font-weight:400;margin-bottom:.3rem;letter-spacing:1px}
+        .track-info-profile p{color:#444;font-size:.7rem;letter-spacing:1px}
+        .track-stats{display:flex;gap:1.5rem;font-size:.7rem;color:#666;letter-spacing:2px}
+        .back-btn{display:inline-block;padding:.8rem 1.5rem;background:transparent;border:1px solid #1a1a1a;color:#666;font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:3px;text-decoration:none;text-transform:uppercase;transition:all .3s;margin-bottom:2rem}
+        .back-btn:hover{border-color:#333;color:#999}
+        .empty-state{text-align:center;padding:4rem 2rem;color:#444;font-size:.8rem;letter-spacing:2px}
+        .progress-bar{width:100%;height:8px;background:#1a1a1a;margin-top:.5rem;border-radius:4px;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,#666,#999);transition:width .3s}
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <a href="index.html" class="back-btn">← BACK TO CAVE</a>
+
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-username" id="profileUsername">...</div>
+            <div class="profile-joined" id="profileJoined">MEMBER SINCE ...</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Digger Score</div>
+                <div class="stat-value" id="diggerScore">0</div>
+                <div class="stat-rank" id="rankInfo">RANK: NEWCOMER</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="scoreProgress" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Tracks Shared</div>
+                <div class="stat-value" id="tracksSubmitted">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Likes</div>
+                <div class="stat-value" id="totalLikes">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Avg Likes</div>
+                <div class="stat-value" id="avgLikes">0</div>
+            </div>
+        </div>
+
+        <!-- Badges Section -->
+        <h2 class="section-title">Badges & Achievements</h2>
+        <div class="badges-grid" id="badgesGrid">
+            <div class="badge locked">
+                <div class="badge-icon">🎧</div>
+                <div class="badge-name">First Track</div>
+                <div class="badge-desc">Share your first track</div>
+            </div>
+            <div class="badge locked">
+                <div class="badge-icon">🔥</div>
+                <div class="badge-name">Hot Track</div>
+                <div class="badge-desc">Get 10+ likes on a track</div>
+            </div>
+            <div class="badge locked">
+                <div class="badge-icon">💎</div>
+                <div class="badge-name">Crate Digger</div>
+                <div class="badge-desc">Share 10 tracks</div>
+            </div>
+            <div class="badge locked">
+                <div class="badge-icon">⭐</div>
+                <div class="badge-name">Taste Maker</div>
+                <div class="badge-desc">Reach 100 Digger Score</div>
+            </div>
+            <div class="badge locked">
+                <div class="badge-icon">🏆</div>
+                <div class="badge-name">Legend</div>
+                <div class="badge-desc">Reach 500 Digger Score</div>
+            </div>
+            <div class="badge locked">
+                <div class="badge-icon">👑</div>
+                <div class="badge-name">Cave Master</div>
+                <div class="badge-desc">Reach 1000 Digger Score</div>
+            </div>
+        </div>
+
+        <!-- Tracks History -->
+        <h2 class="section-title">Your Tracks</h2>
+        <div class="tracks-list" id="tracksList">
+            <div class="empty-state">Loading tracks...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "518773964413",
+            appId: "1:518773964413:web:46f3b94fb6db076c323b14",
+            measurementId: "G-3NN8Q90FX8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'auth.html';
+                return;
+            }
+
+            // Load user profile
+            loadUserProfile(user);
+            loadUserTracks(user.uid);
+        });
+
+        async function loadUserProfile(user) {
+            document.getElementById('profileUsername').textContent = user.displayName || 'Anonymous';
+
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+
+                    // Update stats
+                    const diggerScore = userData.diggerScore || 0;
+                    const tracksSubmitted = userData.tracksSubmitted || 0;
+                    const totalLikes = userData.totalLikes || 0;
+                    const avgLikes = tracksSubmitted > 0 ? Math.round(totalLikes / tracksSubmitted) : 0;
+
+                    document.getElementById('diggerScore').textContent = diggerScore;
+                    document.getElementById('tracksSubmitted').textContent = tracksSubmitted;
+                    document.getElementById('totalLikes').textContent = totalLikes;
+                    document.getElementById('avgLikes').textContent = avgLikes;
+
+                    // Update rank
+                    const rank = getRank(diggerScore);
+                    document.getElementById('rankInfo').textContent = `RANK: ${rank}`;
+
+                    // Update progress bar
+                    const progress = (diggerScore % 100) / 100 * 100;
+                    document.getElementById('scoreProgress').style.width = progress + '%';
+
+                    // Update badges
+                    updateBadges(userData);
+
+                    // Show join date
+                    if (userData.createdAt) {
+                        const date = userData.createdAt.toDate();
+                        document.getElementById('profileJoined').textContent =
+                            `MEMBER SINCE ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        function getRank(score) {
+            if (score >= 1000) return 'CAVE MASTER';
+            if (score >= 500) return 'LEGEND';
+            if (score >= 100) return 'TASTE MAKER';
+            if (score >= 50) return 'CRATE DIGGER';
+            if (score >= 10) return 'DIGGER';
+            return 'NEWCOMER';
+        }
+
+        function updateBadges(userData) {
+            const badges = document.querySelectorAll('.badge');
+            const diggerScore = userData.diggerScore || 0;
+            const tracksSubmitted = userData.tracksSubmitted || 0;
+
+            // First Track
+            if (tracksSubmitted >= 1) {
+                badges[0].classList.remove('locked');
+                badges[0].innerHTML += '<div class="badge-unlock">✓</div>';
+            }
+
+            // Hot Track (check if any track has 10+ likes - will implement later)
+
+            // Crate Digger
+            if (tracksSubmitted >= 10) {
+                badges[2].classList.remove('locked');
+                badges[2].innerHTML += '<div class="badge-unlock">✓</div>';
+            }
+
+            // Taste Maker
+            if (diggerScore >= 100) {
+                badges[3].classList.remove('locked');
+                badges[3].innerHTML += '<div class="badge-unlock">✓</div>';
+            }
+
+            // Legend
+            if (diggerScore >= 500) {
+                badges[4].classList.remove('locked');
+                badges[4].innerHTML += '<div class="badge-unlock">✓</div>';
+            }
+
+            // Cave Master
+            if (diggerScore >= 1000) {
+                badges[5].classList.remove('locked');
+                badges[5].innerHTML += '<div class="badge-unlock">✓</div>';
+            }
+        }
+
+        async function loadUserTracks(userId) {
+            const tracksRef = collection(db, 'tracks');
+            const q = query(tracksRef, where('userId', '==', userId), orderBy('timestamp', 'desc'));
+
+            onSnapshot(q, (snapshot) => {
+                const tracksList = document.getElementById('tracksList');
+
+                if (snapshot.empty) {
+                    tracksList.innerHTML = '<div class="empty-state">No tracks yet. Start sharing!</div>';
+                    return;
+                }
+
+                tracksList.innerHTML = '';
+
+                snapshot.forEach((doc) => {
+                    const track = doc.data();
+                    const trackDiv = document.createElement('div');
+                    trackDiv.className = 'profile-track';
+                    trackDiv.innerHTML = `
+                        <div class="track-info-profile">
+                            <h3>${track.title}</h3>
+                            <p>${track.artist}</p>
+                        </div>
+                        <div class="track-stats">
+                            <span>❤️ ${track.likes || 0}</span>
+                            <span>${track.platform.toUpperCase()}</span>
+                        </div>
+                    `;
+                    tracksList.appendChild(trackDiv);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
