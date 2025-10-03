@@ -1,36 +1,70 @@
 // Chat functionality
 const chatMessages = document.getElementById('chatMessages');
 const chatUsername = document.getElementById('chatUsername');
+const chatUsernameDisplay = document.getElementById('chatUsernameDisplay');
 const chatMessage = document.getElementById('chatMessage');
 const chatSend = document.getElementById('chatSend');
 const chatToggle = document.getElementById('chatToggle');
 const chatSection = document.getElementById('chatSection');
 
-// Guardar username y color en localStorage
-const savedUsername = localStorage.getItem('chatUsername');
-const savedColor = localStorage.getItem('chatColor');
+// Store current user data
+let currentChatUser = null;
 
-if (savedUsername) {
-    chatUsername.value = savedUsername;
-}
-
-// Función para generar color único basado en el username
-function getUsernameColor(username) {
-    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e2', '#f8b739', '#6c5ce7'];
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+// Wait for auth and setup chat username
+setTimeout(() => {
+    const auth = window.firebaseAuth;
+    if (auth && auth.currentUser) {
+        setupChatUser(auth.currentUser);
     }
-    return colors[Math.abs(hash) % colors.length];
-}
 
-chatUsername.addEventListener('blur', () => {
-    if (chatUsername.value.trim()) {
-        const username = chatUsername.value.trim().toUpperCase();
-        localStorage.setItem('chatUsername', username);
-        localStorage.setItem('chatColor', getUsernameColor(username));
+    // Listen for auth changes
+    if (window.firebaseAuth) {
+        window.firebaseAuth.onAuthStateChanged((user) => {
+            if (user) {
+                setupChatUser(user);
+            } else {
+                // Not logged in - show input field
+                chatUsername.style.display = 'block';
+                chatUsernameDisplay.style.display = 'none';
+                currentChatUser = null;
+            }
+        });
     }
-});
+}, 1000);
+
+async function setupChatUser(user) {
+    try {
+        // Get user data from Firestore
+        const userDoc = await window.chatGetDoc(window.chatDoc(window.chatDb, 'users', user.uid));
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const username = user.displayName || user.email.split('@')[0];
+
+            // Store user data for chat
+            currentChatUser = {
+                username: username.toUpperCase(),
+                isAdmin: userData.isAdmin || false,
+                userId: user.uid
+            };
+
+            // Hide input field, show display with neon effect
+            chatUsername.style.display = 'none';
+            chatUsernameDisplay.style.display = 'block';
+            chatUsernameDisplay.textContent = currentChatUser.username;
+
+            // Apply neon glow based on admin status
+            if (currentChatUser.isAdmin) {
+                chatUsernameDisplay.style.color = '#ff3366';
+                chatUsernameDisplay.style.textShadow = '0 0 7px #ff3366, 0 0 10px #ff3366, 0 0 21px #ff3366, 0 0 42px #ff0044';
+            } else {
+                chatUsernameDisplay.style.color = '#fff';
+                chatUsernameDisplay.style.textShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
+            }
+        }
+    } catch (error) {
+        console.error('Error setting up chat user:', error);
+    }
+}
 
 // Toggle chat minimize/maximize
 chatToggle.addEventListener('click', () => {
@@ -48,14 +82,22 @@ function formatTime(timestamp) {
 }
 
 // Función para agregar mensaje al DOM
-function addMessageToDOM(username, message, timestamp) {
+function addMessageToDOM(username, message, timestamp, isAdmin = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
 
-    const userColor = getUsernameColor(username);
+    // Apply neon glow based on admin status
+    let userColor, userShadow;
+    if (isAdmin) {
+        userColor = '#ff3366';
+        userShadow = '0 0 7px #ff3366, 0 0 10px #ff3366, 0 0 21px #ff3366, 0 0 42px #ff0044';
+    } else {
+        userColor = '#fff';
+        userShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
+    }
 
     messageDiv.innerHTML = `
-        <div class="chat-message-user" style="color: ${userColor}">${username}</div>
+        <div class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}">${username}</div>
         <div class="chat-message-text">${message}</div>
         <div class="chat-message-time">${formatTime(timestamp)}</div>
     `;
@@ -66,14 +108,21 @@ function addMessageToDOM(username, message, timestamp) {
 
 // Función para enviar mensaje
 async function sendMessage() {
-    const username = chatUsername.value.trim().toUpperCase();
-    const message = chatMessage.value.trim();
+    let username;
 
-    if (!username) {
-        alert('Por favor ingresa tu nick');
-        chatUsername.focus();
-        return;
+    // Check if user is logged in
+    if (currentChatUser) {
+        username = currentChatUser.username;
+    } else {
+        username = chatUsername.value.trim().toUpperCase();
+        if (!username) {
+            alert('Por favor ingresa tu nick');
+            chatUsername.focus();
+            return;
+        }
     }
+
+    const message = chatMessage.value.trim();
 
     if (!message) {
         return;
@@ -92,7 +141,9 @@ async function sendMessage() {
         await window.chatAddDoc(window.chatCollection(window.chatDb, 'messages'), {
             username: username,
             message: messageText,
-            timestamp: window.chatServerTimestamp()
+            timestamp: window.chatServerTimestamp(),
+            userId: currentChatUser ? currentChatUser.userId : null,
+            isAdmin: currentChatUser ? currentChatUser.isAdmin : false
         });
 
         chatMessage.focus();
@@ -139,7 +190,7 @@ function startListeningToMessages() {
 
             // Mostrar en orden cronológico (inverso a como vienen)
             messages.reverse().forEach((data) => {
-                addMessageToDOM(data.username, data.message, data.timestamp);
+                addMessageToDOM(data.username, data.message, data.timestamp, data.isAdmin || false);
             });
         });
     } catch (error) {
