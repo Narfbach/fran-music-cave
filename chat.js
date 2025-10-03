@@ -9,36 +9,43 @@ const chatSection = document.getElementById('chatSection');
 
 // Store current user data
 let currentChatUser = null;
+let authListenerAttached = false;
 
-// Wait for auth and setup chat username
-setTimeout(() => {
-    const auth = window.firebaseAuth;
-    if (auth && auth.currentUser) {
-        setupChatUser(auth.currentUser);
+// Function to initialize chat with auth
+function initializeChatAuth() {
+    if (authListenerAttached) return; // Prevent multiple listeners
+
+    if (!window.firebaseAuth) {
+        // Retry if auth not ready
+        setTimeout(initializeChatAuth, 200);
+        return;
     }
+
+    authListenerAttached = true;
 
     // Listen for auth changes
-    if (window.firebaseAuth) {
-        window.firebaseAuth.onAuthStateChanged((user) => {
-            if (user) {
-                setupChatUser(user);
-            } else {
-                // Not logged in - disable chat
-                chatUsername.style.display = 'none';
-                chatUsernameDisplay.style.display = 'block';
-                chatUsernameDisplay.textContent = 'LOGIN REQUIRED';
-                chatUsernameDisplay.style.color = '#666';
-                chatUsernameDisplay.style.textShadow = 'none';
-                currentChatUser = null;
+    window.firebaseAuth.onAuthStateChanged((user) => {
+        if (user) {
+            setupChatUser(user);
+        } else {
+            // Not logged in - disable chat
+            chatUsername.style.display = 'none';
+            chatUsernameDisplay.style.display = 'block';
+            chatUsernameDisplay.textContent = 'LOGIN REQUIRED';
+            chatUsernameDisplay.style.color = '#666';
+            chatUsernameDisplay.style.textShadow = 'none';
+            currentChatUser = null;
 
-                // Disable message input
-                chatMessage.disabled = true;
-                chatMessage.placeholder = 'LOGIN TO CHAT';
-                chatSend.disabled = true;
-            }
-        });
-    }
-}, 1000);
+            // Disable message input
+            chatMessage.disabled = true;
+            chatMessage.placeholder = 'LOGIN TO CHAT';
+            chatSend.disabled = true;
+        }
+    });
+}
+
+// Start initialization immediately
+initializeChatAuth();
 
 async function setupChatUser(user) {
     try {
