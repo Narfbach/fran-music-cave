@@ -46,6 +46,22 @@ async function loadTracksFromFirebase() {
     }
 }
 
+// Intersection Observer para lazy loading
+const lazyLoadObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const iframe = entry.target;
+            if (iframe.dataset.src) {
+                iframe.src = iframe.dataset.src;
+                iframe.removeAttribute('data-src');
+                observer.unobserve(iframe);
+            }
+        }
+    });
+}, {
+    rootMargin: '200px' // Cargar 200px antes de que sea visible
+});
+
 // Función para crear una tarjeta de track
 function createTrackCard(track) {
     const card = document.createElement('div');
@@ -78,11 +94,12 @@ function createTrackCard(track) {
         </div>
         <div class="track-player">
             <iframe
-                src="${track.embedUrl}"
+                data-src="${track.embedUrl}"
                 height="${iframeHeight}"
                 frameborder="0"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy">
+                loading="lazy"
+                style="background: #0a0a0a;">
             </iframe>
         </div>
         <div class="track-interactions">
@@ -114,6 +131,12 @@ function createTrackCard(track) {
 
     // Inicializar contador de comentarios
     initCommentCount(trackId);
+
+    // Lazy load iframe
+    const iframe = card.querySelector('iframe');
+    if (iframe) {
+        lazyLoadObserver.observe(iframe);
+    }
 
     return card;
 }
