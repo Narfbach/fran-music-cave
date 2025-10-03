@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://narfbach.github.io/fran-music-cave/sitemap.xml
