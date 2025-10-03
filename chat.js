@@ -2,6 +2,9 @@
 const chatMessages = document.getElementById('chatMessages');
 const chatUsername = document.getElementById('chatUsername');
 const chatUsernameDisplay = document.getElementById('chatUsernameDisplay');
+const chatUserContainer = document.getElementById('chatUserContainer');
+const chatUserAvatar = document.getElementById('chatUserAvatar');
+const chatUserCard = document.getElementById('chatUserCard');
 const chatMessage = document.getElementById('chatMessage');
 const chatSend = document.getElementById('chatSend');
 const chatToggle = document.getElementById('chatToggle');
@@ -29,11 +32,10 @@ function initializeChatAuth() {
             setupChatUser(user);
         } else {
             // Not logged in - disable chat
-            chatUsername.style.display = 'none';
-            chatUsernameDisplay.style.display = 'block';
-            chatUsernameDisplay.textContent = 'LOGIN REQUIRED';
-            chatUsernameDisplay.style.color = '#666';
-            chatUsernameDisplay.style.textShadow = 'none';
+            chatUserContainer.style.display = 'none';
+            document.getElementById('chatUsernameInputWrapper').style.display = 'block';
+            chatUsername.value = 'LOGIN REQUIRED';
+            chatUsername.disabled = true;
             currentChatUser = null;
 
             // Disable message input
@@ -59,12 +61,22 @@ async function setupChatUser(user) {
             currentChatUser = {
                 username: username.toUpperCase(),
                 isAdmin: userData.isAdmin || false,
-                userId: user.uid
+                userId: user.uid,
+                photoURL: userData.photoURL || null,
+                diggerScore: userData.diggerScore || 0,
+                tracksSubmitted: userData.tracksSubmitted || 0
             };
 
-            // Hide input field, show display with neon effect
-            chatUsername.style.display = 'none';
-            chatUsernameDisplay.style.display = 'block';
+            // Hide input wrapper, show user container
+            document.getElementById('chatUsernameInputWrapper').style.display = 'none';
+            chatUserContainer.style.display = 'flex';
+
+            // Set avatar
+            if (currentChatUser.photoURL) {
+                chatUserAvatar.innerHTML = `<img src="${currentChatUser.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Avatar">`;
+            }
+
+            // Set username with neon effect
             chatUsernameDisplay.textContent = currentChatUser.username;
 
             // Apply neon glow based on admin status
@@ -76,6 +88,9 @@ async function setupChatUser(user) {
                 chatUsernameDisplay.style.textShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
             }
 
+            // Setup user card hover
+            setupUserCard();
+
             // Enable message input
             chatMessage.disabled = false;
             chatMessage.placeholder = 'MESSAGE';
@@ -84,6 +99,68 @@ async function setupChatUser(user) {
     } catch (error) {
         console.error('Error setting up chat user:', error);
     }
+}
+
+// Setup user card hover functionality
+function setupUserCard() {
+    const cardAvatar = document.getElementById('cardAvatar');
+    const cardUsername = document.getElementById('cardUsername');
+    const cardRank = document.getElementById('cardRank');
+    const cardScore = document.getElementById('cardScore');
+    const cardTracks = document.getElementById('cardTracks');
+
+    // Populate card data
+    if (currentChatUser.photoURL) {
+        cardAvatar.innerHTML = `<img src="${currentChatUser.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Avatar">`;
+    } else {
+        cardAvatar.innerHTML = `<svg width="50" height="50" viewBox="0 0 100 100" style="opacity:0.3">
+            <circle cx="50" cy="50" r="45" fill="#111"/>
+            <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+            <circle cx="50" cy="50" r="30" fill="#111"/>
+            <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+            <circle cx="50" cy="50" r="8" fill="#222"/>
+            <circle cx="50" cy="50" r="3" fill="#000"/>
+        </svg>`;
+    }
+
+    cardUsername.textContent = currentChatUser.username;
+
+    // Get rank from score
+    const rank = getRank(currentChatUser.diggerScore);
+    cardRank.textContent = currentChatUser.isAdmin ? 'ADMIN' : rank;
+
+    // Apply color based on admin status
+    if (currentChatUser.isAdmin) {
+        cardUsername.style.color = '#ff3366';
+        cardUsername.style.textShadow = '0 0 7px #ff3366, 0 0 10px #ff3366';
+        cardRank.style.color = '#ff3366';
+    } else {
+        cardUsername.style.color = '#fff';
+        cardUsername.style.textShadow = '0 0 7px #fff, 0 0 10px #fff';
+        cardRank.style.color = '#999';
+    }
+
+    cardScore.textContent = currentChatUser.diggerScore;
+    cardTracks.textContent = currentChatUser.tracksSubmitted;
+
+    // Show/hide card on hover
+    chatUserContainer.addEventListener('mouseenter', () => {
+        chatUserCard.style.display = 'block';
+    });
+
+    chatUserContainer.addEventListener('mouseleave', () => {
+        chatUserCard.style.display = 'none';
+    });
+}
+
+// Get rank from score (same logic as profile)
+function getRank(score) {
+    if (score >= 1000) return 'CAVE MASTER';
+    if (score >= 500) return 'LEGEND';
+    if (score >= 100) return 'TASTE MAKER';
+    if (score >= 50) return 'CRATE DIGGER';
+    if (score >= 10) return 'DIGGER';
+    return 'NEWCOMER';
 }
 
 // Toggle chat minimize/maximize

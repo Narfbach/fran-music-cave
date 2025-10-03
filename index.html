@@ -226,14 +226,47 @@
                 <!-- Los mensajes se cargarán aquí -->
             </div>
             <div class="chat-input-container">
-                <div id="chatUsernameDisplay" style="display:none;padding:.6rem;background:#0a0a0a;border:1px solid #1a1a1a;font-size:.65rem;letter-spacing:2px;color:#666;min-width:100px;text-align:center"></div>
-                <input
-                    type="text"
-                    id="chatUsername"
-                    placeholder="NICK"
-                    maxlength="15"
-                    autocomplete="off"
-                >
+                <!-- User avatar and name display -->
+                <div id="chatUserContainer" style="display:none;padding:.4rem;background:#0a0a0a;border:1px solid #1a1a1a;min-width:130px;display:flex;align-items:center;gap:.5rem;position:relative">
+                    <div id="chatUserAvatar" style="width:28px;height:28px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg width="28" height="28" viewBox="0 0 100 100" style="opacity:0.3">
+                            <circle cx="50" cy="50" r="45" fill="#111"/>
+                            <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+                            <circle cx="50" cy="50" r="30" fill="#111"/>
+                            <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+                            <circle cx="50" cy="50" r="8" fill="#222"/>
+                            <circle cx="50" cy="50" r="3" fill="#000"/>
+                        </svg>
+                    </div>
+                    <a href="profile.html" id="chatUsernameDisplay" style="font-size:.65rem;letter-spacing:2px;color:#666;text-decoration:none;cursor:pointer;flex:1"></a>
+
+                    <!-- User card on hover -->
+                    <div id="chatUserCard" style="display:none;position:absolute;bottom:100%;left:0;margin-bottom:.5rem;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:200px;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.5)">
+                        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
+                            <div id="cardAvatar" style="width:50px;height:50px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center"></div>
+                            <div>
+                                <div id="cardUsername" style="font-size:.8rem;letter-spacing:2px;margin-bottom:.3rem"></div>
+                                <div id="cardRank" style="font-size:.6rem;letter-spacing:1px;color:#666"></div>
+                            </div>
+                        </div>
+                        <div style="border-top:1px solid #1a1a1a;padding-top:.8rem;font-size:.6rem;letter-spacing:1px;color:#666">
+                            <div style="margin-bottom:.3rem">DIGGER SCORE: <span id="cardScore" style="color:#999">0</span></div>
+                            <div>TRACKS SHARED: <span id="cardTracks" style="color:#999">0</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legacy username input (hidden when logged in) -->
+                <div id="chatUsernameInputWrapper" style="display:none">
+                    <input
+                        type="text"
+                        id="chatUsername"
+                        placeholder="NICK"
+                        maxlength="15"
+                        autocomplete="off"
+                    >
+                </div>
+
                 <input
                     type="text"
                     id="chatMessage"
