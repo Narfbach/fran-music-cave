@@ -23,10 +23,18 @@ setTimeout(() => {
             if (user) {
                 setupChatUser(user);
             } else {
-                // Not logged in - show input field
-                chatUsername.style.display = 'block';
-                chatUsernameDisplay.style.display = 'none';
+                // Not logged in - disable chat
+                chatUsername.style.display = 'none';
+                chatUsernameDisplay.style.display = 'block';
+                chatUsernameDisplay.textContent = 'LOGIN REQUIRED';
+                chatUsernameDisplay.style.color = '#666';
+                chatUsernameDisplay.style.textShadow = 'none';
                 currentChatUser = null;
+
+                // Disable message input
+                chatMessage.disabled = true;
+                chatMessage.placeholder = 'LOGIN TO CHAT';
+                chatSend.disabled = true;
             }
         });
     }
@@ -60,6 +68,11 @@ async function setupChatUser(user) {
                 chatUsernameDisplay.style.color = '#fff';
                 chatUsernameDisplay.style.textShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
             }
+
+            // Enable message input
+            chatMessage.disabled = false;
+            chatMessage.placeholder = 'MESSAGE';
+            chatSend.disabled = false;
         }
     } catch (error) {
         console.error('Error setting up chat user:', error);
@@ -108,20 +121,14 @@ function addMessageToDOM(username, message, timestamp, isAdmin = false) {
 
 // Función para enviar mensaje
 async function sendMessage() {
-    let username;
-
-    // Check if user is logged in
-    if (currentChatUser) {
-        username = currentChatUser.username;
-    } else {
-        username = chatUsername.value.trim().toUpperCase();
-        if (!username) {
-            alert('Por favor ingresa tu nick');
-            chatUsername.focus();
-            return;
-        }
+    // Only allow registered users to send messages
+    if (!currentChatUser) {
+        alert('⚠️ Debes estar registrado para usar el chat.\n\nHaz click en LOGIN para crear tu cuenta gratis.');
+        chatMessage.value = ''; // Clear the message
+        return;
     }
 
+    const username = currentChatUser.username;
     const message = chatMessage.value.trim();
 
     if (!message) {
