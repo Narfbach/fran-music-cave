@@ -890,6 +890,12 @@ nav {
     letter-spacing: 3px;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .faq-icon {
     position: relative;
     width: 35px;
@@ -905,7 +911,6 @@ nav {
     transition: all 0.3s;
     font-family: 'Courier New', monospace;
     flex-shrink: 0;
-    margin-right: 0.5rem;
 }
 
 .faq-icon:hover {
