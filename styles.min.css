@@ -890,28 +890,39 @@ nav {
 }
 
 .faq-icon {
-    position: relative;
+    position: absolute;
+    top: 1.5rem;
+    right: 4.5rem;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #333;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #666;
+    font-size: 0.7rem;
     cursor: help;
-    transition: color 0.3s;
+    transition: all 0.3s;
+    font-family: 'Courier New', monospace;
 }
 
 .faq-icon:hover {
     color: #999;
+    border-color: #555;
 }
 
 .faq-tooltip {
     position: absolute;
-    top: 100%;
+    top: 30px;
     right: 0;
-    margin-top: 10px;
-    background: #111;
+    background: #0a0a0a;
     border: 1px solid #333;
-    padding: 1rem;
-    font-size: 0.75rem;
-    line-height: 1.6;
+    padding: 0.8rem;
+    font-size: 0.7rem;
+    line-height: 1.8;
     letter-spacing: 0.5px;
-    width: 280px;
+    width: 250px;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s, visibility 0.3s;
@@ -921,6 +932,8 @@ nav {
 
 .faq-tooltip strong {
     color: #999;
+    display: block;
+    margin-bottom: 0.4rem;
 }
 
 .faq-icon:hover .faq-tooltip {
