@@ -28,13 +28,28 @@
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23000'/><circle cx='50' cy='50' r='40' fill='%23111'/><circle cx='50' cy='50' r='30' fill='%23000'/><circle cx='50' cy='50' r='20' fill='%23222'/><circle cx='50' cy='50' r='8' fill='%23000'/></svg>">
 
-    <!-- Preconnect para optimización de recursos externos -->
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.min.css" as="style">
+    <link rel="preload" href="script.min.js" as="script">
+
+    <!-- Preconnect to critical external domains -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://firebase.googleapis.com" crossorigin>
+
+    <!-- Preconnect to music platforms (early hints) -->
     <link rel="preconnect" href="https://open.spotify.com">
     <link rel="preconnect" href="https://w.soundcloud.com">
     <link rel="preconnect" href="https://www.youtube.com">
+    <link rel="preconnect" href="https://i.scdn.co">
+
+    <!-- DNS prefetch for additional domains -->
     <link rel="dns-prefetch" href="https://open.spotify.com">
     <link rel="dns-prefetch" href="https://w.soundcloud.com">
     <link rel="dns-prefetch" href="https://www.youtube.com">
+    <link rel="dns-prefetch" href="https://i.scdn.co">
+    <link rel="dns-prefetch" href="https://i.ytimg.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <!-- Critical CSS inline -->
     <style>
@@ -56,6 +71,10 @@
     </style>
 
     <link rel="stylesheet" href="styles.min.css">
+
+    <!-- Prefetch secondary scripts -->
+    <link rel="prefetch" href="chat.min.js" as="script">
+    <link rel="prefetch" href="upload.min.js" as="script">
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
