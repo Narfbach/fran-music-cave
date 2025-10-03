@@ -101,7 +101,18 @@
             <div class="header-right">
                 <div class="header-subtitle">ARCHIVE</div>
                 <div id="userSection" style="display:none;font-size:.7rem;color:#666;letter-spacing:2px;margin-right:1rem;position:relative">
-                    <button id="userMenuBtn" style="background:transparent;border:none;color:#666;font-family:'Courier New',monospace;font-size:.7rem;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;gap:.3rem">
+                    <button id="userMenuBtn" style="background:transparent;border:none;color:#666;font-family:'Courier New',monospace;font-size:.7rem;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;gap:.5rem">
+                        <div id="headerAvatar" style="width:30px;height:30px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center">
+                            <!-- Default vinyl record avatar -->
+                            <svg width="30" height="30" viewBox="0 0 100 100" style="opacity:0.3">
+                                <circle cx="50" cy="50" r="45" fill="#111"/>
+                                <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+                                <circle cx="50" cy="50" r="30" fill="#111"/>
+                                <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+                                <circle cx="50" cy="50" r="8" fill="#222"/>
+                                <circle cx="50" cy="50" r="3" fill="#000"/>
+                            </svg>
+                        </div>
                         <span id="username"></span>
                         <span style="font-size:.5rem">▼</span>
                     </button>
@@ -258,12 +269,50 @@
         const db = getFirestore(app);
 
         // Auth state listener
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 document.getElementById('loginLink').style.display = 'none';
                 document.getElementById('userSection').style.display = 'block';
                 document.getElementById('username').textContent = user.displayName || user.email.split('@')[0];
                 window.currentUser = user;
+
+                // Load user profile data for avatar and admin status
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+
+                        // Load custom avatar if exists
+                        const headerAvatar = document.getElementById('headerAvatar');
+                        if (userData.photoURL) {
+                            headerAvatar.innerHTML = `<img src="${userData.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Profile">`;
+                        }
+
+                        // Apply neon glow effect based on admin status
+                        const usernameEl = document.getElementById('username');
+                        if (userData.isAdmin) {
+                            // Admin: red neon glow
+                            usernameEl.style.color = '#ff3366';
+                            usernameEl.style.textShadow = `
+                                0 0 7px #ff3366,
+                                0 0 10px #ff3366,
+                                0 0 21px #ff3366,
+                                0 0 42px #ff0044
+                            `;
+                        } else {
+                            // Regular user: white neon glow
+                            usernameEl.style.color = '#fff';
+                            usernameEl.style.textShadow = `
+                                0 0 7px #fff,
+                                0 0 10px #fff,
+                                0 0 21px #fff,
+                                0 0 42px #ccc
+                            `;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading user profile:', error);
+                }
             } else {
                 document.getElementById('loginLink').style.display = 'block';
                 document.getElementById('userSection').style.display = 'none';
