@@ -86,9 +86,15 @@ nav {
     font-size: 1.2rem;
     font-weight: 400;
     margin-bottom: 0.5rem;
-    color: #666;
+    color: #ddd;
     letter-spacing: 8px;
     text-transform: uppercase;
+    text-shadow:
+        0 0 30px rgba(255, 255, 255, 1),
+        0 0 60px rgba(200, 200, 200, 0.8),
+        0 0 90px rgba(150, 150, 150, 0.6),
+        0 0 120px rgba(100, 100, 100, 0.4);
+    animation: neonFlicker 8s linear infinite;
 }
 
 .hero-banner p {
@@ -101,7 +107,7 @@ nav {
 .upload-toggle {
     background: transparent;
     border: 1px solid #1a1a1a;
-    color: #666;
+    color: #bbb;
     font-family: 'Courier New', monospace;
     font-size: 0.7rem;
     padding: 0.6rem 1.5rem;
@@ -109,11 +115,19 @@ nav {
     letter-spacing: 3px;
     transition: all 0.3s;
     text-transform: uppercase;
+    text-shadow:
+        0 0 15px rgba(200, 200, 200, 0.6),
+        0 0 30px rgba(150, 150, 150, 0.4),
+        0 0 45px rgba(100, 100, 100, 0.3);
 }
 
 .upload-toggle:hover {
     border-color: #333;
-    color: #999;
+    color: #ddd;
+    text-shadow:
+        0 0 20px rgba(220, 220, 220, 0.8),
+        0 0 40px rgba(180, 180, 180, 0.5),
+        0 0 60px rgba(120, 120, 120, 0.4);
 }
 
 /* Feed Container */
