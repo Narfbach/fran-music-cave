@@ -25,11 +25,6 @@
         .badge-name{font-size:.7rem;color:#666;letter-spacing:2px;text-transform:uppercase}
         .badge-desc{font-size:.6rem;color:#444;letter-spacing:1px;margin-top:.5rem}
         .badge-unlock{position:absolute;top:5px;right:5px;font-size:.5rem;color:#4CAF50}
-        .tracks-list{margin-bottom:3rem}
-        .profile-track{background:#0a0a0a;border:1px solid #1a1a1a;padding:1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
-        .track-info-profile h3{color:#999;font-size:.9rem;font-weight:400;margin-bottom:.3rem;letter-spacing:1px}
-        .track-info-profile p{color:#444;font-size:.7rem;letter-spacing:1px}
-        .track-stats{display:flex;gap:1.5rem;font-size:.7rem;color:#666;letter-spacing:2px}
         .back-btn{display:inline-block;padding:.8rem 1.5rem;background:transparent;border:1px solid #1a1a1a;color:#666;font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:3px;text-decoration:none;text-transform:uppercase;transition:all .3s;margin-bottom:2rem}
         .back-btn:hover{border-color:#333;color:#999}
         .empty-state{text-align:center;padding:4rem 2rem;color:#444;font-size:.8rem;letter-spacing:2px}
@@ -124,18 +119,13 @@
             </div>
         </div>
 
-        <!-- Tracks History -->
-        <h2 class="section-title">Your Tracks</h2>
-        <div class="tracks-list" id="tracksList">
-            <div class="empty-state">Loading tracks...</div>
-        </div>
     </div>
 
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
@@ -163,7 +153,6 @@
 
                 // Load other user's profile
                 loadUserProfileById(viewUserId);
-                loadUserTracks(viewUserId);
             } else {
                 // Viewing own profile - require login
                 if (!currentUser) {
@@ -171,7 +160,6 @@
                     return;
                 }
                 loadUserProfile(currentUser);
-                loadUserTracks(currentUser.uid);
             }
         });
 
@@ -386,39 +374,6 @@
                 badges[5].classList.remove('locked');
                 badges[5].innerHTML += '<div class="badge-unlock">✓</div>';
             }
-        }
-
-        async function loadUserTracks(userId) {
-            const tracksRef = collection(db, 'tracks');
-            const q = query(tracksRef, where('userId', '==', userId), orderBy('timestamp', 'desc'));
-
-            onSnapshot(q, (snapshot) => {
-                const tracksList = document.getElementById('tracksList');
-
-                if (snapshot.empty) {
-                    tracksList.innerHTML = '<div class="empty-state">No tracks yet. Start sharing!</div>';
-                    return;
-                }
-
-                tracksList.innerHTML = '';
-
-                snapshot.forEach((doc) => {
-                    const track = doc.data();
-                    const trackDiv = document.createElement('div');
-                    trackDiv.className = 'profile-track';
-                    trackDiv.innerHTML = `
-                        <div class="track-info-profile">
-                            <h3>${track.title}</h3>
-                            <p>${track.artist}</p>
-                        </div>
-                        <div class="track-stats">
-                            <span>❤️ ${track.likes || 0}</span>
-                            <span>${track.platform.toUpperCase()}</span>
-                        </div>
-                    `;
-                    tracksList.appendChild(trackDiv);
-                });
-            });
         }
 
         // Handle photo upload
