@@ -128,6 +128,20 @@ uploadForm.addEventListener('submit', async (e) => {
             likes: 0
         });
 
+        // Increment tracksSubmitted and diggerScore for the user
+        if (userId) {
+            const userRef = window.chatDoc(window.chatDb, 'users', userId);
+            const userDoc = await window.chatGetDoc(userRef);
+            if (userDoc.exists()) {
+                const currentTracks = userDoc.data().tracksSubmitted || 0;
+                const currentScore = userDoc.data().diggerScore || 0;
+                await window.chatUpdateDoc(userRef, {
+                    tracksSubmitted: currentTracks + 1,
+                    diggerScore: currentScore + 10 // +10 points per track
+                });
+            }
+        }
+
         // Mostrar mensaje de éxito
         uploadForm.style.display = 'none';
         uploadSuccess.classList.add('active');

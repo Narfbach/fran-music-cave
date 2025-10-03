@@ -370,12 +370,28 @@ function setupInteractions(card, trackId) {
 
         try {
             const docSnap = await window.chatGetDoc(trackRef);
-            const currentLikes = docSnap.data().likes || 0;
+            const trackData = docSnap.data();
+            const currentLikes = trackData.likes || 0;
+            const trackOwnerId = trackData.userId;
 
             if (isCurrentlyLiked) {
                 // Quitar like
                 const newLikes = Math.max(0, currentLikes - 1);
                 await window.chatUpdateDoc(trackRef, { likes: newLikes });
+
+                // Update track owner's totalLikes and diggerScore
+                if (trackOwnerId) {
+                    const userRef = window.chatDoc(window.chatDb, 'users', trackOwnerId);
+                    const userDoc = await window.chatGetDoc(userRef);
+                    if (userDoc.exists()) {
+                        const currentTotalLikes = userDoc.data().totalLikes || 0;
+                        const currentScore = userDoc.data().diggerScore || 0;
+                        await window.chatUpdateDoc(userRef, {
+                            totalLikes: Math.max(0, currentTotalLikes - 1),
+                            diggerScore: Math.max(0, currentScore - 1) // -1 point per like removed
+                        });
+                    }
+                }
 
                 // Actualizar UI inmediatamente
                 likeCountSpan.textContent = newLikes;
@@ -392,6 +408,20 @@ function setupInteractions(card, trackId) {
                 // Dar like
                 const newLikes = currentLikes + 1;
                 await window.chatUpdateDoc(trackRef, { likes: newLikes });
+
+                // Update track owner's totalLikes and diggerScore
+                if (trackOwnerId) {
+                    const userRef = window.chatDoc(window.chatDb, 'users', trackOwnerId);
+                    const userDoc = await window.chatGetDoc(userRef);
+                    if (userDoc.exists()) {
+                        const currentTotalLikes = userDoc.data().totalLikes || 0;
+                        const currentScore = userDoc.data().diggerScore || 0;
+                        await window.chatUpdateDoc(userRef, {
+                            totalLikes: currentTotalLikes + 1,
+                            diggerScore: currentScore + 1 // +1 point per like
+                        });
+                    }
+                }
 
                 // Actualizar UI inmediatamente
                 likeCountSpan.textContent = newLikes;
