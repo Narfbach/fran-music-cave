@@ -97,6 +97,7 @@ function createTrackCard(track) {
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <span>Comment</span>
+                <span class="comment-count" style="display: none;">0</span>
             </button>
         </div>
         <div class="track-comments" id="comments-${trackId}" style="display: none;">
@@ -110,6 +111,9 @@ function createTrackCard(track) {
 
     // Event listeners para likes y comentarios
     setupInteractions(card, trackId);
+
+    // Inicializar contador de comentarios
+    initCommentCount(trackId);
 
     return card;
 }
@@ -249,6 +253,25 @@ async function sendComment(trackId, input) {
     }
 }
 
+// Función para inicializar contador de comentarios
+async function initCommentCount(trackId) {
+    if (!window.chatDb) return;
+
+    const commentsRef = window.chatCollection(window.chatDb, `tracks/${trackId}/comments`);
+
+    window.chatOnSnapshot(commentsRef, (snapshot) => {
+        const commentCount = snapshot.size;
+        const commentBtn = document.querySelector(`.comment-btn[data-track-id="${trackId}"]`);
+        if (commentBtn) {
+            const countSpan = commentBtn.querySelector('.comment-count');
+            if (countSpan) {
+                countSpan.textContent = commentCount;
+                countSpan.style.display = commentCount > 0 ? 'inline' : 'none';
+            }
+        }
+    });
+}
+
 // Función para cargar comentarios
 async function loadComments(trackId) {
     if (!window.chatDb) return;
@@ -261,6 +284,17 @@ async function loadComments(trackId) {
         if (!commentsList) return;
 
         commentsList.innerHTML = '';
+
+        // Actualizar contador de comentarios
+        const commentCount = snapshot.size;
+        const commentBtn = document.querySelector(`.comment-btn[data-track-id="${trackId}"]`);
+        if (commentBtn) {
+            const countSpan = commentBtn.querySelector('.comment-count');
+            if (countSpan) {
+                countSpan.textContent = commentCount;
+                countSpan.style.display = commentCount > 0 ? 'inline' : 'none';
+            }
+        }
 
         snapshot.forEach((doc) => {
             const comment = doc.data();
