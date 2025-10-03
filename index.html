@@ -36,6 +36,25 @@
     <link rel="dns-prefetch" href="https://w.soundcloud.com">
     <link rel="dns-prefetch" href="https://www.youtube.com">
 
+    <!-- Critical CSS inline -->
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Courier New',monospace;background:#000;color:#fff;overflow-x:hidden}
+        header{background:#000;border-bottom:1px solid #1a1a1a;position:fixed;width:100%;top:0;z-index:1000}
+        nav{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1.5rem;max-width:900px;margin:0 auto}
+        .logo{font-size:.9rem;font-weight:400;color:#ddd;letter-spacing:3px;text-shadow:0 0 30px rgba(255,255,255,1),0 0 60px rgba(200,200,200,.8),0 0 90px rgba(150,150,150,.6),0 0 120px rgba(100,100,100,.4);animation:neonFlicker 8s linear infinite}
+        @keyframes neonFlicker{0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 30px rgba(255,255,255,1),0 0 60px rgba(200,200,200,.8),0 0 90px rgba(150,150,150,.6),0 0 120px rgba(100,100,100,.4);color:#ddd;opacity:1}20%,24%,55%{text-shadow:none;color:#222;opacity:.2}22%{text-shadow:0 0 15px rgba(200,200,200,.5),0 0 30px rgba(150,150,150,.3);color:#888;opacity:.5}}
+        .header-right{display:flex;align-items:center;gap:1.5rem}
+        .header-subtitle{font-size:.7rem;color:#333;text-transform:uppercase;letter-spacing:4px}
+        .github-link{color:#444;display:flex;align-items:center;transition:all .3s;opacity:.6}
+        .hero-banner{margin-top:60px;padding:8rem 2rem 4rem;text-align:center;background:#000}
+        .hero-banner h1{font-size:1.2rem;font-weight:400;margin-bottom:.5rem;color:#ddd;letter-spacing:8px;text-transform:uppercase;text-shadow:0 0 30px rgba(255,255,255,1),0 0 60px rgba(200,200,200,.8),0 0 90px rgba(150,150,150,.6),0 0 120px rgba(100,100,100,.4)}
+        .hero-banner p{color:#333;font-size:.75rem;letter-spacing:2px;margin-bottom:2rem}
+        .upload-toggle{background:transparent;border:1px solid #1a1a1a;color:#bbb;font-family:'Courier New',monospace;font-size:.7rem;padding:.6rem 1.5rem;cursor:pointer;letter-spacing:3px;transition:all .3s;text-transform:uppercase;text-shadow:0 0 15px rgba(200,200,200,.6),0 0 30px rgba(150,150,150,.4),0 0 45px rgba(100,100,100,.3)}
+        .loading{display:none;text-align:center;padding:2rem;color:#333}
+        .loading.active{display:block}
+    </style>
+
     <link rel="stylesheet" href="styles.css">
 
     <!-- Structured Data (JSON-LD) -->
