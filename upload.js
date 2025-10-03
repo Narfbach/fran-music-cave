@@ -98,9 +98,22 @@ uploadForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        // Get current user info
+        // Get current user info and admin status
         const userId = window.currentUser?.uid || null;
         const username = window.currentUser?.displayName || submitterName || 'Anonymous';
+
+        // Get user's admin status from Firestore
+        let isAdmin = false;
+        if (userId) {
+            try {
+                const userDoc = await window.chatGetDoc(window.chatDoc(window.chatDb, 'users', userId));
+                if (userDoc.exists()) {
+                    isAdmin = userDoc.data().isAdmin || false;
+                }
+            } catch (error) {
+                console.error('Error getting user admin status:', error);
+            }
+        }
 
         // Guardar directamente en la colección "tracks" (publicación automática)
         await window.chatAddDoc(window.chatCollection(window.chatDb, 'tracks'), {
@@ -110,6 +123,7 @@ uploadForm.addEventListener('submit', async (e) => {
             embedUrl: trackData.embedUrl,
             submittedBy: username,
             userId: userId,
+            isAdmin: isAdmin,
             timestamp: window.chatServerTimestamp(),
             likes: 0
         });

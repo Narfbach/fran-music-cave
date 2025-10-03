@@ -109,10 +109,25 @@ function createTrackCard(track) {
     const submittedBy = track.submittedBy || 'Anonymous';
     const trackId = track.id;
     const likes = track.likes || 0;
+    const userId = track.userId || null;
+    const isAdmin = track.isAdmin || false;
 
     // Verificar si el usuario ya dio like
     const likedTracks = JSON.parse(localStorage.getItem('likedTracks') || '[]');
     const isLiked = likedTracks.includes(trackId);
+
+    // Generate user card ID
+    const userCardId = `track-user-card-${trackId}`;
+
+    // Apply neon glow based on admin status
+    let userColor, userShadow;
+    if (isAdmin) {
+        userColor = '#ff3366';
+        userShadow = '0 0 7px #ff3366, 0 0 10px #ff3366, 0 0 21px #ff3366, 0 0 42px #ff0044';
+    } else {
+        userColor = '#fff';
+        userShadow = '0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ccc';
+    }
 
     card.innerHTML = `
         <div class="track-header">
@@ -120,7 +135,11 @@ function createTrackCard(track) {
             <div class="track-artist">${track.artist}</div>
             <div class="track-meta">
                 <span class="track-platform ${platformClass}">${platformName}</span>
-                <span class="track-submitter">shared by ${submittedBy}</span>
+                <span class="track-submitter" style="position:relative">
+                    shared by
+                    <a href="profile.html" class="track-username" style="color:${userColor};text-shadow:${userShadow};text-decoration:none;cursor:pointer">${submittedBy}</a>
+                    <div id="${userCardId}" class="track-user-card" style="display:none;position:fixed;background:#0a0a0a;border:1px solid #333;padding:1rem;min-width:220px;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.5);white-space:nowrap"></div>
+                </span>
             </div>
         </div>
         <div class="track-player">
@@ -163,6 +182,11 @@ function createTrackCard(track) {
     // Inicializar contador de comentarios
     initCommentCount(trackId);
 
+    // Setup user card hover if user exists
+    if (userId) {
+        setupTrackUserCard(card, userId, userCardId, submittedBy, isAdmin);
+    }
+
     // Lazy load iframe
     const iframe = card.querySelector('iframe');
     if (iframe) {
@@ -170,6 +194,85 @@ function createTrackCard(track) {
     }
 
     return card;
+}
+
+// Function to get rank from score
+function getRankFromScore(score) {
+    if (score >= 1000) return 'CAVE MASTER';
+    if (score >= 500) return 'LEGEND';
+    if (score >= 100) return 'TASTE MAKER';
+    if (score >= 50) return 'CRATE DIGGER';
+    if (score >= 10) return 'DIGGER';
+    return 'NEWCOMER';
+}
+
+// Setup user card hover for track
+async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
+    try {
+        const userDoc = await window.chatGetDoc(window.chatDoc(window.chatDb, 'users', userId));
+        if (!userDoc.exists()) return;
+
+        const userData = userDoc.data();
+        const rank = getRankFromScore(userData.diggerScore || 0);
+        const displayRank = isAdmin ? 'ADMIN' : rank;
+        const photoURL = userData.photoURL || null;
+
+        const defaultAvatar = `<svg width="50" height="50" viewBox="0 0 100 100" style="opacity:0.3">
+            <circle cx="50" cy="50" r="45" fill="#111"/>
+            <circle cx="50" cy="50" r="40" fill="#0a0a0a"/>
+            <circle cx="50" cy="50" r="30" fill="#111"/>
+            <circle cx="50" cy="50" r="20" fill="#0a0a0a"/>
+            <circle cx="50" cy="50" r="8" fill="#222"/>
+            <circle cx="50" cy="50" r="3" fill="#000"/>
+        </svg>`;
+
+        const cardAvatarHTML = photoURL
+            ? `<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover" alt="${username}">`
+            : defaultAvatar;
+
+        const rankColor = isAdmin ? '#ff3366' : '#999';
+        const userNameColor = isAdmin ? '#ff3366' : '#fff';
+        const userNameShadow = isAdmin ? '0 0 7px #ff3366, 0 0 10px #ff3366' : '0 0 7px #fff, 0 0 10px #fff';
+
+        const userCard = card.querySelector(`#${userCardId}`);
+        userCard.innerHTML = `
+            <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
+                <div style="width:50px;height:50px;border-radius:50%;border:1px solid #333;overflow:hidden;background:#0a0a0a;display:flex;align-items:center;justify-content:center">
+                    ${cardAvatarHTML}
+                </div>
+                <div>
+                    <div style="font-size:.8rem;letter-spacing:2px;margin-bottom:.3rem;color:${userNameColor};text-shadow:${userNameShadow}">${username}</div>
+                    <div style="font-size:.6rem;letter-spacing:1px;color:${rankColor}">${displayRank}</div>
+                </div>
+            </div>
+            <div style="border-top:1px solid #1a1a1a;padding-top:.8rem;font-size:.6rem;letter-spacing:1px;color:#666">
+                <div style="margin-bottom:.3rem">DIGGER SCORE: <span style="color:#999">${userData.diggerScore || 0}</span></div>
+                <div>TRACKS SHARED: <span style="color:#999">${userData.tracksSubmitted || 0}</span></div>
+            </div>
+        `;
+
+        // Setup hover
+        const usernameLink = card.querySelector('.track-username');
+
+        const showCard = () => {
+            const rect = usernameLink.getBoundingClientRect();
+            userCard.style.display = 'block';
+            userCard.style.left = `${rect.left}px`;
+            userCard.style.top = `${rect.bottom + 10}px`;
+        };
+
+        const hideCard = () => {
+            userCard.style.display = 'none';
+        };
+
+        usernameLink.addEventListener('mouseenter', showCard);
+        usernameLink.addEventListener('mouseleave', hideCard);
+        userCard.addEventListener('mouseenter', () => userCard.style.display = 'block');
+        userCard.addEventListener('mouseleave', hideCard);
+
+    } catch (error) {
+        console.error('Error loading user data for track:', error);
+    }
 }
 
 // Función para cargar más tracks
