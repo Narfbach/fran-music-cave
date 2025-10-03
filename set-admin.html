@@ -52,13 +52,16 @@
             }
         }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('status').innerHTML = `Logged in as: ${user.email}`;
-            } else {
-                document.getElementById('status').innerHTML = '⚠️ Not logged in. <a href="auth.html" style="color:#666">Login first</a>';
-            }
-        });
+        // Wait for auth to initialize
+        setTimeout(() => {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('status').innerHTML = `✓ Logged in as: ${user.email}<br><br>Click the button above to set admin status.`;
+                } else {
+                    document.getElementById('status').innerHTML = '⚠️ Not logged in. <a href="auth.html" style="color:#666">Login first</a>';
+                }
+            });
+        }, 500);
     </script>
 </body>
 </html>
