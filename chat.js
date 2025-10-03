@@ -179,7 +179,7 @@ function formatTime(timestamp) {
 }
 
 // Función para agregar mensaje al DOM
-async function addMessageToDOM(username, message, timestamp, isAdmin = false, userId = null, photoURL = null) {
+async function addMessageToDOM(username, message, timestamp, isAdmin = false, userId = null, photoURL = null, messageId = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
     messageDiv.style.display = 'flex';
@@ -213,6 +213,12 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
     // Generate unique ID for this message's card
     const cardId = `user-card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+    // Check if current user is admin
+    const showDeleteBtn = currentChatUser && currentChatUser.isAdmin && messageId;
+    const deleteBtnHTML = showDeleteBtn
+        ? `<button onclick="deleteMessage('${messageId}')" style="background:transparent;border:1px solid #333;color:#666;font-size:.6rem;padding:.2rem .5rem;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:1px;transition:all .3s" onmouseover="this.style.borderColor='#ff3366';this.style.color='#ff3366'" onmouseout="this.style.borderColor='#333';this.style.color='#666'" title="Delete message">✕</button>`
+        : '';
+
     messageDiv.innerHTML = `
         <div style="position:relative">
             <a href="profile.html" style="display:block">
@@ -226,6 +232,7 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
             <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.2rem;position:relative">
                 <a href="profile.html" class="chat-message-user" style="color: ${userColor}; text-shadow: ${userShadow}; text-decoration:none; cursor:pointer">${username}</a>
                 <div class="chat-message-time" style="font-size:.5rem;color:#333;letter-spacing:1px">${formatTime(timestamp)}</div>
+                ${deleteBtnHTML}
             </div>
             <div class="chat-message-text" style="color:#999;font-size:.7rem;letter-spacing:1px;word-wrap:break-word">${message}</div>
         </div>
@@ -371,7 +378,10 @@ function startListeningToMessages() {
             const messages = [];
 
             snapshot.forEach((doc) => {
-                messages.push(doc.data());
+                messages.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
             });
 
             // Mostrar en orden cronológico (inverso a como vienen)
@@ -382,12 +392,32 @@ function startListeningToMessages() {
                     data.timestamp,
                     data.isAdmin || false,
                     data.userId || null,
-                    data.photoURL || null
+                    data.photoURL || null,
+                    data.id
                 );
             });
         });
     } catch (error) {
         console.error('Error al escuchar mensajes:', error);
+    }
+}
+
+// Función para eliminar mensaje (solo admins)
+window.deleteMessage = async function(messageId) {
+    if (!currentChatUser || !currentChatUser.isAdmin) {
+        alert('⚠️ Solo los admins pueden eliminar mensajes.');
+        return;
+    }
+
+    const confirmation = confirm('¿Estás seguro de que quieres eliminar este mensaje?');
+    if (!confirmation) return;
+
+    try {
+        const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        await deleteDoc(doc(window.chatDb, 'messages', messageId));
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        alert('Error al eliminar el mensaje.');
     }
 }
 
