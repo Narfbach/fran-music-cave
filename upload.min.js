@@ -41,7 +41,7 @@ trackUrlInput.addEventListener('input', () => {
 uploadToggle.addEventListener('click', () => {
     // Check if user is logged in
     if (!window.currentUser) {
-        alert('⚠️ Debes estar registrado para subir tracks.\n\nCrea tu cuenta gratis haciendo click en LOGIN y comparte tu música favorita con la comunidad.');
+        customAlert('Debes estar registrado para subir tracks.\n\nCrea tu cuenta gratis haciendo click en LOGIN y comparte tu música favorita con la comunidad.', '⚠️');
         return;
     }
 
@@ -230,12 +230,12 @@ uploadForm.addEventListener('submit', async (e) => {
     const trackData = processTrackUrl(trackUrl);
 
     if (!trackData) {
-        alert('Invalid URL. Please use Spotify, YouTube or SoundCloud links.');
+        customAlert('Invalid URL. Please use Spotify, YouTube or SoundCloud links.', '❌');
         return;
     }
 
     if (!window.chatDb) {
-        alert('Firebase is not configured properly.');
+        customAlert('Firebase is not configured properly.', '⚠️');
         return;
     }
 
@@ -295,6 +295,6 @@ uploadForm.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.error('Error submitting track:', error);
-        alert('Error submitting track. Please try again.');
+        customAlert('Error submitting track. Please try again.', '❌');
     }
 });
