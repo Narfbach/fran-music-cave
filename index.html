@@ -241,5 +241,16 @@
     <script src="script.min.js"></script>
     <script src="chat.min.js"></script>
     <script src="upload.min.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+    if('serviceWorker' in navigator){
+        window.addEventListener('load',()=>{
+            navigator.serviceWorker.register('/fran-music-cave/sw.js')
+                .then(reg=>console.log('SW registered'))
+                .catch(err=>console.log('SW registration failed'));
+        });
+    }
+    </script>
 </body>
 </html>
