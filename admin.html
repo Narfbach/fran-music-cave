@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - The Music Cave</title>
     <link rel="stylesheet" href="styles.min.css">
+    <script src="custom-alert.js"></script>
     <style>
         .admin-container{max-width:900px;margin:100px auto;padding:2rem}
         .admin-header{margin-bottom:3rem;text-align:center}
@@ -72,6 +73,15 @@
         </div>
     </div>
 
+    <!-- Custom Alert Modal -->
+    <div class="custom-alert-overlay" id="customAlert">
+        <div class="custom-alert-box">
+            <div class="custom-alert-icon" id="alertIcon">⚠️</div>
+            <div class="custom-alert-message" id="alertMessage"></div>
+            <button class="custom-alert-btn" id="alertBtn">OK</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -109,7 +119,7 @@
                 localStorage.setItem('adminAuth', 'true');
                 showAdminPanel();
             } else {
-                alert('Incorrect password');
+                customAlert('Incorrect password', '❌');
             }
         }
 
@@ -203,15 +213,15 @@
         }
 
         async function deleteTrack(trackId) {
-            if (!confirm('Are you sure you want to delete this track?')) return;
+            if (!confirm('¿Estás seguro de que quieres eliminar este track?')) return;
 
             try {
                 const trackRef = window.adminDoc(window.adminDb, 'tracks', trackId);
                 await window.adminDeleteDoc(trackRef);
-                alert('Track deleted successfully');
+                customAlert('Track eliminado exitosamente', '✓');
             } catch (error) {
                 console.error('Error deleting track:', error);
-                alert('Error deleting track');
+                customAlert('Error al eliminar el track', '❌');
             }
         }
 
