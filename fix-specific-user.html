@@ -59,7 +59,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
@@ -81,6 +81,7 @@
         window.getDocs = getDocs;
         window.updateDoc = updateDoc;
         window.doc = doc;
+        window.writeBatch = writeBatch;
     </script>
 
     <script>
@@ -96,7 +97,7 @@
             log('Starting user fix process...');
 
             try {
-                // Query for user with email joakola87@gmail.com
+                // Step 1: Find user
                 const usersRef = window.collection(window.db, 'users');
                 const q = window.query(usersRef, window.where('email', '==', 'joakola87@gmail.com'));
 
@@ -108,21 +109,70 @@
                     return;
                 }
 
+                let userId = null;
                 querySnapshot.forEach(async (userDoc) => {
+                    userId = userDoc.id;
                     const userData = userDoc.data();
                     log(`Found user: ${userDoc.id}`);
                     log(`Current username: ${userData.username}`);
                     log(`Current email: ${userData.email}`);
-
-                    // Update username to "Joako"
-                    const userRef = window.doc(window.db, 'users', userDoc.id);
-                    await window.updateDoc(userRef, {
-                        username: 'Joako'
-                    });
-
-                    log('Username updated to: Joako', 'success');
-                    log('✓ User fixed successfully!', 'success');
                 });
+
+                if (!userId) return;
+
+                // Step 2: Update user document
+                log('Updating user document...');
+                const userRef = window.doc(window.db, 'users', userId);
+                await window.updateDoc(userRef, {
+                    username: 'Joako'
+                });
+                log('✓ User document updated', 'success');
+
+                // Step 3: Update all chat messages
+                log('Updating chat messages...');
+                const messagesRef = window.collection(window.db, 'messages');
+                const messagesQuery = window.query(messagesRef, window.where('userId', '==', userId));
+                const messagesSnapshot = await window.getDocs(messagesQuery);
+
+                let messageCount = 0;
+                const batch = window.writeBatch(window.db);
+
+                messagesSnapshot.forEach((msgDoc) => {
+                    batch.update(msgDoc.ref, { username: 'JOAKO' }); // Uppercase for chat
+                    messageCount++;
+                });
+
+                if (messageCount > 0) {
+                    await batch.commit();
+                    log(`✓ Updated ${messageCount} chat messages`, 'success');
+                } else {
+                    log('No chat messages found');
+                }
+
+                // Step 4: Update all tracks
+                log('Updating tracks...');
+                const tracksRef = window.collection(window.db, 'tracks');
+                const tracksQuery = window.query(tracksRef, window.where('userId', '==', userId));
+                const tracksSnapshot = await window.getDocs(tracksQuery);
+
+                let trackCount = 0;
+                const trackBatch = window.writeBatch(window.db);
+
+                tracksSnapshot.forEach((trackDoc) => {
+                    trackBatch.update(trackDoc.ref, { submittedBy: 'Joako' });
+                    trackCount++;
+                });
+
+                if (trackCount > 0) {
+                    await trackBatch.commit();
+                    log(`✓ Updated ${trackCount} tracks`, 'success');
+                } else {
+                    log('No tracks found');
+                }
+
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+                log('✓ ALL DONE! User fully updated', 'success');
+                log('Refresh the page to see changes', 'success');
 
             } catch (error) {
                 log(`Error: ${error.message}`, 'error');
