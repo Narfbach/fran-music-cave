@@ -182,6 +182,7 @@ function formatTime(timestamp) {
 async function addMessageToDOM(username, message, timestamp, isAdmin = false, userId = null, photoURL = null, messageId = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
+    messageDiv.setAttribute('data-message-id', messageId);
     messageDiv.style.display = 'flex';
     messageDiv.style.gap = '.5rem';
     messageDiv.style.alignItems = 'flex-start';
@@ -319,7 +320,7 @@ async function addMessageToDOM(username, message, timestamp, isAdmin = false, us
 async function sendMessage() {
     // Only allow registered users to send messages
     if (!currentChatUser) {
-        alert('⚠️ Debes estar registrado para usar el chat.\n\nHaz click en LOGIN para crear tu cuenta gratis.');
+        customAlert('Debes estar registrado para usar el chat.\n\nHaz click en LOGIN para crear tu cuenta gratis.', '⚠️');
         chatMessage.value = ''; // Clear the message
         return;
     }
@@ -332,7 +333,7 @@ async function sendMessage() {
     }
 
     if (!window.chatDb) {
-        alert('Firebase no está configurado. Por favor sigue las instrucciones en firebase-config.js');
+        customAlert('Firebase no está configurado. Por favor sigue las instrucciones en firebase-config.js', '⚠️');
         return;
     }
 
@@ -353,7 +354,7 @@ async function sendMessage() {
         chatMessage.focus();
     } catch (error) {
         console.error('Error al enviar mensaje:', error);
-        alert('Error al enviar mensaje. Verifica que Firebase esté configurado correctamente.');
+        customAlert('Error al enviar mensaje. Verifica que Firebase esté configurado correctamente.', '❌');
         // Si hay error, devolver el mensaje al campo
         chatMessage.value = message;
     }
@@ -369,6 +370,8 @@ chatMessage.addEventListener('keypress', (e) => {
 });
 
 // Escuchar mensajes en tiempo real
+let loadedMessageIds = new Set();
+
 function startListeningToMessages() {
     if (!window.chatDb) {
         console.log('Esperando configuración de Firebase...');
@@ -380,32 +383,35 @@ function startListeningToMessages() {
         const messagesRef = window.chatCollection(window.chatDb, 'messages');
         const q = window.chatQuery(
             messagesRef,
-            window.chatOrderBy('timestamp', 'desc'),
+            window.chatOrderBy('timestamp', 'asc'),
             window.chatLimit(50)
         );
 
         window.chatOnSnapshot(q, (snapshot) => {
-            chatMessages.innerHTML = '';
-            const messages = [];
+            snapshot.docChanges().forEach((change) => {
+                const data = change.doc.data();
+                const messageId = change.doc.id;
 
-            snapshot.forEach((doc) => {
-                messages.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
+                if (change.type === 'added' && !loadedMessageIds.has(messageId)) {
+                    loadedMessageIds.add(messageId);
+                    addMessageToDOM(
+                        data.username,
+                        data.message,
+                        data.timestamp,
+                        data.isAdmin || false,
+                        data.userId || null,
+                        data.photoURL || null,
+                        messageId
+                    );
+                }
 
-            // Mostrar en orden cronológico (inverso a como vienen)
-            messages.reverse().forEach((data) => {
-                addMessageToDOM(
-                    data.username,
-                    data.message,
-                    data.timestamp,
-                    data.isAdmin || false,
-                    data.userId || null,
-                    data.photoURL || null,
-                    data.id
-                );
+                if (change.type === 'removed') {
+                    loadedMessageIds.delete(messageId);
+                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (messageElement) {
+                        messageElement.remove();
+                    }
+                }
             });
         });
     } catch (error) {
@@ -416,7 +422,7 @@ function startListeningToMessages() {
 // Función para eliminar mensaje (solo admins)
 window.deleteMessage = async function(messageId) {
     if (!currentChatUser || !currentChatUser.isAdmin) {
-        alert('⚠️ Solo los admins pueden eliminar mensajes.');
+        customAlert('Solo los admins pueden eliminar mensajes.', '⚠️');
         return;
     }
 
@@ -428,7 +434,7 @@ window.deleteMessage = async function(messageId) {
         await deleteDoc(doc(window.chatDb, 'messages', messageId));
     } catch (error) {
         console.error('Error deleting message:', error);
-        alert('Error al eliminar el mensaje.');
+        customAlert('Error al eliminar el mensaje.', '❌');
     }
 }
 
