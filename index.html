@@ -98,6 +98,7 @@
     <header>
         <nav>
             <a href="./" class="logo" style="text-decoration:none;color:inherit">THE MUSIC CAVE</a>
+            <span style="font-size:0.5rem;color:#00ff00;letter-spacing:1px;margin-left:0.5rem;opacity:0.5">SUPABASE</span>
             <div class="header-right">
                 <div id="userSection" style="display:none;font-size:.7rem;color:#666;letter-spacing:2px;margin-right:1rem;position:relative">
                     <button id="userMenuBtn" style="background:transparent;border:none;color:#666;font-family:'Courier New',monospace;font-size:.7rem;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;gap:.5rem">
@@ -301,112 +302,79 @@
         }
     </script>
 
-    <!-- Firebase SDK -->
+    <!-- Supabase SDK -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        import { getMessaging, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
-            authDomain: "fran-music-cave.firebaseapp.com",
-            projectId: "fran-music-cave",
-            storageBucket: "fran-music-cave.firebasestorage.app",
-            messagingSenderId: "518773964413",
-            appId: "1:518773964413:web:46f3b94fb6db076c323b14",
-            measurementId: "G-3NN8Q90FX8"
-        };
+        const supabaseUrl = 'https://mcologfwjggmmsihtrrq.supabase.co'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jb2xvZ2Z3amdnbW1zaWh0cnJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDE3NjgsImV4cCI6MjA3NTExNzc2OH0.oBdDaOprgrR_elipZYDyVkilxWeW6mECWgtugnenm68'
 
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const messaging = getMessaging(app);
+        export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                redirectTo: 'https://narfbach.github.io/fran-music-cave/index-supabase.html'
+            }
+        })
 
-        // Export messaging globally
-        window.firebaseMessaging = messaging;
-        window.firebaseOnMessage = onMessage;
+        // Export globally
+        window.supabase = supabase
+        window.currentUser = null
+        window.currentUserIsAdmin = false
 
         // Auth state listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                document.getElementById('loginLink').style.display = 'none';
-                document.getElementById('userSection').style.display = 'block';
-                document.getElementById('username').textContent = user.displayName || user.email.split('@')[0];
-                window.currentUser = user;
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                const user = session.user
+                window.currentUser = user
 
-                // Load user profile data for avatar and admin status
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
+                // Get or create user in database
+                const { data: userData, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
 
-                        // Load custom avatar if exists
-                        const headerAvatar = document.getElementById('headerAvatar');
-                        if (userData.photoURL) {
-                            headerAvatar.innerHTML = `<img src="${userData.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Profile">`;
-                        }
-
-                        // Apply neon glow effect based on admin status
-                        const usernameEl = document.getElementById('username');
-                        if (userData.isAdmin) {
-                            // Admin: red neon glow
-                            usernameEl.style.color = '#ff3366';
-                            usernameEl.style.textShadow = `
-                                0 0 7px #ff3366,
-                                0 0 10px #ff3366,
-                                0 0 21px #ff3366,
-                                0 0 42px #ff0044
-                            `;
-                        } else {
-                            // Regular user: white neon glow
-                            usernameEl.style.color = '#fff';
-                            usernameEl.style.textShadow = `
-                                0 0 7px #fff,
-                                0 0 10px #fff,
-                                0 0 21px #fff,
-                                0 0 42px #ccc
-                            `;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error loading user profile:', error);
+                if (error && error.code === 'PGRST116') {
+                    // User doesn't exist, create
+                    await supabase.from('users').insert({
+                        id: user.id,
+                        email: user.email,
+                        username: user.email.split('@')[0],
+                        photo_url: user.user_metadata?.avatar_url || null
+                    })
                 }
 
-                // Initialize in-app notifications
-                if (window.initNotifications) {
-                    window.initNotifications(user);
+                window.currentUserIsAdmin = userData?.is_admin || false
+
+                // Update UI
+                document.getElementById('loginLink').style.display = 'none'
+                document.getElementById('userSection').style.display = 'block'
+                document.getElementById('username').textContent = userData?.username || user.email.split('@')[0]
+
+                if (userData?.photo_url) {
+                    document.getElementById('headerAvatar').innerHTML =
+                        `<img src="${userData.photo_url}" style="width:100%;height:100%;object-fit:cover" alt="Profile">`
                 }
 
-                // Initialize push notifications
-                if (window.pushNotificationManager && messaging) {
-                    window.pushNotificationManager.init(messaging, user);
+                // Initialize notifications
+                if (window.initSupabaseNotifications) {
+                    window.initSupabaseNotifications(user)
                 }
             } else {
-                document.getElementById('loginLink').style.display = 'block';
-                document.getElementById('userSection').style.display = 'none';
-                document.getElementById('notificationsBtn').style.display = 'none';
-                window.currentUser = null;
+                document.getElementById('loginLink').style.display = 'block'
+                document.getElementById('userSection').style.display = 'none'
+                document.getElementById('notificationsBtn').style.display = 'none'
+                window.currentUser = null
+                window.currentUserIsAdmin = false
             }
-        });
+        })
 
-        window.firebaseAuth = auth;
-        window.firebaseSignOut = signOut;
-
-        window.chatDb = db;
-        window.chatCollection = collection;
-        window.chatAddDoc = addDoc;
-        window.chatQuery = query;
-        window.chatWhere = where;
-        window.chatOrderBy = orderBy;
-        window.chatLimit = limit;
-        window.chatOnSnapshot = onSnapshot;
-        window.chatServerTimestamp = serverTimestamp;
-        window.chatDoc = doc;
-        window.chatGetDoc = getDoc;
-        window.chatUpdateDoc = updateDoc;
+        // Logout function
+        window.handleLogout = async () => {
+            if (confirm('Are you sure you want to logout?')) {
+                await supabase.auth.signOut()
+                window.location.reload()
+            }
+        }
     </script>
 
     <!-- Custom Alert Modal -->

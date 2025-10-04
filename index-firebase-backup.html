@@ -98,7 +98,6 @@
     <header>
         <nav>
             <a href="./" class="logo" style="text-decoration:none;color:inherit">THE MUSIC CAVE</a>
-            <span style="font-size:0.5rem;color:#00ff00;letter-spacing:1px;margin-left:0.5rem;opacity:0.5">SUPABASE</span>
             <div class="header-right">
                 <div id="userSection" style="display:none;font-size:.7rem;color:#666;letter-spacing:2px;margin-right:1rem;position:relative">
                     <button id="userMenuBtn" style="background:transparent;border:none;color:#666;font-family:'Courier New',monospace;font-size:.7rem;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;gap:.5rem">
@@ -137,7 +136,7 @@
                         <div id="notificationsList"></div>
                     </div>
                 </div>
-                <a href="auth-supabase.html" id="loginLink" class="github-link" style="font-size:.65rem;letter-spacing:2px;text-decoration:none">LOGIN</a>
+                <a href="auth.html" id="loginLink" class="github-link" style="font-size:.65rem;letter-spacing:2px;text-decoration:none">LOGIN</a>
                 <a href="https://github.com/Narfbach/fran-music-cave" target="_blank" class="github-link" aria-label="View on GitHub">
                     <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
@@ -302,79 +301,112 @@
         }
     </script>
 
-    <!-- Supabase SDK -->
+    <!-- Firebase SDK -->
     <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getMessaging, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
-        const supabaseUrl = 'https://mcologfwjggmmsihtrrq.supabase.co'
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jb2xvZ2Z3amdnbW1zaWh0cnJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDE3NjgsImV4cCI6MjA3NTExNzc2OH0.oBdDaOprgrR_elipZYDyVkilxWeW6mECWgtugnenm68'
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "518773964413",
+            appId: "1:518773964413:web:46f3b94fb6db076c323b14",
+            measurementId: "G-3NN8Q90FX8"
+        };
 
-        export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: {
-                redirectTo: 'https://narfbach.github.io/fran-music-cave/index-supabase.html'
-            }
-        })
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const messaging = getMessaging(app);
 
-        // Export globally
-        window.supabase = supabase
-        window.currentUser = null
-        window.currentUserIsAdmin = false
+        // Export messaging globally
+        window.firebaseMessaging = messaging;
+        window.firebaseOnMessage = onMessage;
 
         // Auth state listener
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session) {
-                const user = session.user
-                window.currentUser = user
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('loginLink').style.display = 'none';
+                document.getElementById('userSection').style.display = 'block';
+                document.getElementById('username').textContent = user.displayName || user.email.split('@')[0];
+                window.currentUser = user;
 
-                // Get or create user in database
-                const { data: userData, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single()
+                // Load user profile data for avatar and admin status
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
 
-                if (error && error.code === 'PGRST116') {
-                    // User doesn't exist, create
-                    await supabase.from('users').insert({
-                        id: user.id,
-                        email: user.email,
-                        username: user.email.split('@')[0],
-                        photo_url: user.user_metadata?.avatar_url || null
-                    })
+                        // Load custom avatar if exists
+                        const headerAvatar = document.getElementById('headerAvatar');
+                        if (userData.photoURL) {
+                            headerAvatar.innerHTML = `<img src="${userData.photoURL}" style="width:100%;height:100%;object-fit:cover" alt="Profile">`;
+                        }
+
+                        // Apply neon glow effect based on admin status
+                        const usernameEl = document.getElementById('username');
+                        if (userData.isAdmin) {
+                            // Admin: red neon glow
+                            usernameEl.style.color = '#ff3366';
+                            usernameEl.style.textShadow = `
+                                0 0 7px #ff3366,
+                                0 0 10px #ff3366,
+                                0 0 21px #ff3366,
+                                0 0 42px #ff0044
+                            `;
+                        } else {
+                            // Regular user: white neon glow
+                            usernameEl.style.color = '#fff';
+                            usernameEl.style.textShadow = `
+                                0 0 7px #fff,
+                                0 0 10px #fff,
+                                0 0 21px #fff,
+                                0 0 42px #ccc
+                            `;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading user profile:', error);
                 }
 
-                window.currentUserIsAdmin = userData?.is_admin || false
-
-                // Update UI
-                document.getElementById('loginLink').style.display = 'none'
-                document.getElementById('userSection').style.display = 'block'
-                document.getElementById('username').textContent = userData?.username || user.email.split('@')[0]
-
-                if (userData?.photo_url) {
-                    document.getElementById('headerAvatar').innerHTML =
-                        `<img src="${userData.photo_url}" style="width:100%;height:100%;object-fit:cover" alt="Profile">`
+                // Initialize in-app notifications
+                if (window.initNotifications) {
+                    window.initNotifications(user);
                 }
 
-                // Initialize notifications
-                if (window.initSupabaseNotifications) {
-                    window.initSupabaseNotifications(user)
+                // Initialize push notifications
+                if (window.pushNotificationManager && messaging) {
+                    window.pushNotificationManager.init(messaging, user);
                 }
             } else {
-                document.getElementById('loginLink').style.display = 'block'
-                document.getElementById('userSection').style.display = 'none'
-                document.getElementById('notificationsBtn').style.display = 'none'
-                window.currentUser = null
-                window.currentUserIsAdmin = false
+                document.getElementById('loginLink').style.display = 'block';
+                document.getElementById('userSection').style.display = 'none';
+                document.getElementById('notificationsBtn').style.display = 'none';
+                window.currentUser = null;
             }
-        })
+        });
 
-        // Logout function
-        window.handleLogout = async () => {
-            if (confirm('Are you sure you want to logout?')) {
-                await supabase.auth.signOut()
-                window.location.reload()
-            }
-        }
+        window.firebaseAuth = auth;
+        window.firebaseSignOut = signOut;
+
+        window.chatDb = db;
+        window.chatCollection = collection;
+        window.chatAddDoc = addDoc;
+        window.chatQuery = query;
+        window.chatWhere = where;
+        window.chatOrderBy = orderBy;
+        window.chatLimit = limit;
+        window.chatOnSnapshot = onSnapshot;
+        window.chatServerTimestamp = serverTimestamp;
+        window.chatDoc = doc;
+        window.chatGetDoc = getDoc;
+        window.chatUpdateDoc = updateDoc;
     </script>
 
     <!-- Custom Alert Modal -->

@@ -1,77 +1,60 @@
-// Notifications system
-let notificationsListener = null;
+// Supabase Notifications System
+let notificationsSubscription = null;
 
-// Initialize notifications when user logs in
-function initNotifications(user) {
-    if (!user || !window.chatDb) {
-        console.log('Notifications: Waiting for user or Firebase...', { user: !!user, db: !!window.chatDb });
-        return;
-    }
+async function initSupabaseNotifications(user) {
+    if (!user || !window.supabase) return;
 
-    console.log('Notifications: Initializing for user', user.uid);
-
-    // Show notification button
     const notifBtn = document.getElementById('notificationsBtn');
     if (notifBtn) notifBtn.style.display = 'block';
 
-    // Check if where is available
-    if (!window.chatWhere) {
-        console.error('Notifications: chatWhere is not available!');
+    // Load notifications
+    loadNotifications(user.id);
+
+    // Subscribe to realtime updates
+    notificationsSubscription = supabase
+        .channel(`notifications:${user.id}`)
+        .on('postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${user.id}`
+            },
+            () => {
+                loadNotifications(user.id);
+            }
+        )
+        .subscribe();
+}
+
+async function loadNotifications(userId) {
+    const { data: notifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    if (error) {
+        console.error('Error loading notifications:', error);
         return;
     }
 
-    console.log('Notifications: Creating query...');
+    const unreadCount = notifications.filter(n => !n.read).length;
 
-    // Listen for notifications - simplified query without orderBy to avoid index requirement
-    const notificationsRef = window.chatCollection(window.chatDb, 'notifications');
-    const q = window.chatQuery(
-        notificationsRef,
-        window.chatWhere('userId', '==', user.uid),
-        window.chatLimit(50)
-    );
+    // Update badge
+    const badge = document.getElementById('notifBadge');
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
 
-    console.log('Notifications: Query created, setting up listener...');
-
-    notificationsListener = window.chatOnSnapshot(q, (snapshot) => {
-        console.log('Notifications: Snapshot received, count:', snapshot.size);
-
-        const notifications = [];
-        let unreadCount = 0;
-
-        snapshot.forEach((doc) => {
-            const notif = { id: doc.id, ...doc.data() };
-            notifications.push(notif);
-            if (!notif.read) unreadCount++;
-        });
-
-        // Sort notifications by timestamp (newest first) on client side
-        notifications.sort((a, b) => {
-            if (!a.timestamp || !b.timestamp) return 0;
-            return b.timestamp.toMillis() - a.timestamp.toMillis();
-        });
-
-        // Keep only last 20
-        notifications.splice(20);
-
-        console.log('Notifications: Unread count:', unreadCount);
-
-        // Update badge
-        const badge = document.getElementById('notifBadge');
-        if (unreadCount > 0) {
-            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
-        }
-
-        // Update notifications list
-        renderNotifications(notifications);
-    });
-
-    console.log('Notifications: Listener set up successfully');
+    // Render notifications
+    renderNotifications(notifications);
 }
 
-// Render notifications in panel
 function renderNotifications(notifications) {
     const listEl = document.getElementById('notificationsList');
     if (!listEl) return;
@@ -104,8 +87,8 @@ function renderNotifications(notifications) {
         let message = '';
         let time = '';
 
-        if (notif.timestamp) {
-            const date = notif.timestamp.toDate();
+        if (notif.created_at) {
+            const date = new Date(notif.created_at);
             const now = new Date();
             const diff = Math.floor((now - date) / 1000);
 
@@ -115,20 +98,20 @@ function renderNotifications(notifications) {
             else time = `${Math.floor(diff / 86400)}d ago`;
         }
 
-        // Clean username if it's an email
-        let username = notif.fromUsername || 'Someone';
+        // Clean username
+        let username = notif.from_username || 'Someone';
         if (username.includes('@')) {
             username = username.split('@')[0];
         }
 
         if (notif.type === 'like') {
             icon = '❤️';
-            message = `<strong>${username}</strong> liked your track <em>"${notif.trackTitle}"</em>`;
+            message = `<strong>${username}</strong> liked your track <em>"${notif.track_title}"</em>`;
         } else if (notif.type === 'comment') {
             icon = '💬';
-            message = `<strong>${username}</strong> commented on <em>"${notif.trackTitle}"</em>`;
-            if (notif.commentText) {
-                message += `<br><span style="color:#666;font-size:.7rem">"${notif.commentText}"</span>`;
+            message = `<strong>${username}</strong> commented on <em>"${notif.track_title}"</em>`;
+            if (notif.comment_text) {
+                message += `<br><span style="color:#666;font-size:.7rem">"${notif.comment_text}"</span>`;
             }
         }
 
@@ -150,26 +133,18 @@ function renderNotifications(notifications) {
     });
 }
 
-// Handle notification click
 async function handleNotificationClick(notif) {
-    // Mark as read
-    if (!notif.read && window.chatDb) {
-        const notifRef = window.chatDoc(window.chatDb, 'notifications', notif.id);
-        await window.chatUpdateDoc(notifRef, { read: true });
+    if (!notif.read) {
+        await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notif.id);
     }
 
-    // Close panel
     toggleNotifications();
-
-    // Scroll to track (simple approach - reload page will show it)
-    // In a real app, you might scroll to the specific track card
-    window.location.hash = '';
-    setTimeout(() => {
-        window.location.reload();
-    }, 100);
+    window.location.reload();
 }
 
-// Toggle notifications panel
 function toggleNotifications() {
     const panel = document.getElementById('notificationsPanel');
     if (!panel) return;
@@ -177,7 +152,6 @@ function toggleNotifications() {
     const isVisible = panel.style.display === 'block';
     panel.style.display = isVisible ? 'none' : 'block';
 
-    // Close user dropdown if open
     if (!isVisible) {
         const userDropdown = document.getElementById('userDropdown');
         if (userDropdown) userDropdown.style.display = 'none';
@@ -194,6 +168,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Export functions
-window.initNotifications = initNotifications;
+// Export
+window.initSupabaseNotifications = initSupabaseNotifications;
 window.toggleNotifications = toggleNotifications;
