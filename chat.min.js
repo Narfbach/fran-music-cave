@@ -186,6 +186,11 @@ function formatTime(timestamp) {
 
 // Función para agregar mensaje al DOM
 async function addMessageToDOM(username, message, timestamp, isAdmin = false, userId = null, photoURL = null, messageId = null) {
+    // Clean username if it's an email
+    if (username && username.includes('@')) {
+        username = username.split('@')[0];
+    }
+
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
     messageDiv.setAttribute('data-message-id', messageId);

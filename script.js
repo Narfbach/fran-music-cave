@@ -106,7 +106,13 @@ function createTrackCard(track) {
     if (track.platform === 'soundcloud') iframeHeight = '166';
     if (track.platform === 'youtube') iframeHeight = '315';
 
-    const submittedBy = track.submittedBy || 'Anonymous';
+    let submittedBy = track.submittedBy || 'Anonymous';
+
+    // Clean username if it's an email
+    if (submittedBy.includes('@')) {
+        submittedBy = submittedBy.split('@')[0];
+    }
+
     const trackId = track.id;
     const likes = track.likes || 0;
     const userId = track.userId || null;
@@ -211,6 +217,11 @@ function getRankFromScore(score) {
 // Setup user card hover for track
 async function setupTrackUserCard(card, userId, userCardId, username, isAdmin) {
     try {
+        // Clean username if it's an email
+        if (username && username.includes('@')) {
+            username = username.split('@')[0];
+        }
+
         const userDoc = await window.chatGetDoc(window.chatDoc(window.chatDb, 'users', userId));
         if (!userDoc.exists()) return;
 
