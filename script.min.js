@@ -370,6 +370,12 @@ function setupInteractions(card, trackId) {
 
     // Like button
     likeBtn.addEventListener('click', async () => {
+        // Check if user is logged in
+        if (!window.currentUser) {
+            customAlert('Debes estar registrado para dar likes.\n\nHaz click en LOGIN para crear tu cuenta gratis.', '⚠️');
+            return;
+        }
+
         if (!window.chatDb) return;
 
         // Obtener likes guardados localmente
@@ -471,7 +477,16 @@ function setupInteractions(card, trackId) {
 // Función para enviar comentario
 async function sendComment(trackId, input) {
     const text = input.value.trim();
-    if (!text || !window.chatDb) return;
+    if (!text) return;
+
+    // Check if user is logged in
+    if (!window.currentUser) {
+        customAlert('Debes estar registrado para comentar.\n\nHaz click en LOGIN para crear tu cuenta gratis.', '⚠️');
+        input.value = '';
+        return;
+    }
+
+    if (!window.chatDb) return;
 
     const username = localStorage.getItem('chatUsername') || 'Anonymous';
 
