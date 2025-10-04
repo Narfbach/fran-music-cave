@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirming Email - The Music Cave</title>
+    <link rel="stylesheet" href="styles.min.css">
+    <style>
+        .confirm-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        .confirm-box {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            padding: 3rem;
+            max-width: 500px;
+        }
+        .confirm-title {
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            color: #ddd;
+        }
+        .confirm-message {
+            color: #999;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333;
+            border-top-color: #ff3366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="confirm-container">
+        <div class="confirm-box">
+            <div class="confirm-title">EMAIL CONFIRMATION</div>
+            <div id="confirmMessage" class="confirm-message">
+                <div class="loader"></div>
+                <p style="margin-top: 1rem;">Confirming your email...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabase = createClient(
+            'https://mcologfwjggmmsihtrrq.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jb2xvZ2Z3amdnbW1zaWh0cnJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDE3NjgsImV4cCI6MjA3NTExNzc2OH0.oBdDaOprgrR_elipZYDyVkilxWeW6mECWgtugnenm68'
+        )
+
+        // Get hash parameters
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+        const type = hashParams.get('type')
+
+        const messageEl = document.getElementById('confirmMessage')
+
+        if (accessToken && type === 'signup') {
+            // Set the session with the tokens from the URL
+            supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+            }).then(({ data, error }) => {
+                if (error) {
+                    messageEl.innerHTML = `
+                        <div style="color: #ff3366; font-size: 2rem; margin-bottom: 1rem;">✗</div>
+                        <p>Error confirming email</p>
+                        <p style="font-size: 0.8rem; color: #666;">${error.message}</p>
+                    `
+                } else {
+                    messageEl.innerHTML = `
+                        <div style="color: #00ff00; font-size: 2rem; margin-bottom: 1rem;">✓</div>
+                        <p>Email confirmed successfully!</p>
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 1rem;">Redirecting to The Music Cave...</p>
+                    `
+                    setTimeout(() => {
+                        window.location.href = 'index-supabase.html'
+                    }, 2000)
+                }
+            })
+        } else {
+            messageEl.innerHTML = `
+                <div style="color: #ff3366; font-size: 2rem; margin-bottom: 1rem;">✗</div>
+                <p>Invalid confirmation link</p>
+                <p style="font-size: 0.8rem; color: #666;">Please check your email and try again.</p>
+            `
+        }
+    </script>
+</body>
+</html>
