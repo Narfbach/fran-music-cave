@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase to Supabase Migration</title>
+    <style>
+        body { font-family: monospace; padding: 2rem; background: #000; color: #0f0; }
+        button { padding: 1rem 2rem; margin: 0.5rem; background: #0f0; color: #000; border: none; cursor: pointer; }
+        .log { background: #111; padding: 1rem; margin-top: 1rem; max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>Firebase → Supabase Migration</h1>
+    <button onclick="migrateAll()">START MIGRATION</button>
+    <div id="log" class="log"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const firebaseApp = initializeApp({
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            projectId: "fran-music-cave",
+        });
+        const firestore = getFirestore(firebaseApp);
+
+        const supabase = createClient(
+            'https://mcologfwjggmmsihtrrq.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jb2xvZ2Z3amdnbW1zaWh0cnJxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU0MTc2OCwiZXhwIjoyMDc1MTE3NzY4fQ.-B66c9BCgQ8DuO1BaSRRCEliSWIA9M00NCQ9WYc-KMk'
+        );
+
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            logEl.innerHTML += msg + '<br>';
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        window.migrateAll = async function() {
+            log('🚀 Starting migration...');
+
+            try {
+                // Migrate Users
+                log('\n📦 Migrating users...');
+                const usersSnap = await getDocs(collection(firestore, 'users'));
+                let userCount = 0;
+                for (const doc of usersSnap.docs) {
+                    const data = doc.data();
+                    await supabase.from('users').upsert({
+                        id: doc.id,
+                        username: data.username || data.displayName || 'user',
+                        email: data.email || `${doc.id}@temp.com`,
+                        photo_url: data.photoURL || null,
+                        is_admin: data.isAdmin || false,
+                        digger_score: data.diggerScore || 0,
+                        total_likes: data.totalLikes || 0,
+                        tracks_submitted: data.tracksSubmitted || 0,
+                        created_at: data.createdAt?.toDate() || new Date()
+                    }, { onConflict: 'id' });
+                    userCount++;
+                }
+                log(`✅ Migrated ${userCount} users`);
+
+                // Migrate Tracks
+                log('\n📦 Migrating tracks...');
+                const tracksSnap = await getDocs(collection(firestore, 'tracks'));
+                let trackCount = 0;
+                for (const doc of tracksSnap.docs) {
+                    const data = doc.data();
+                    await supabase.from('tracks').upsert({
+                        id: doc.id,
+                        user_id: data.userId,
+                        title: data.title,
+                        artist: data.artist,
+                        platform: data.platform,
+                        url: data.url,
+                        embed_url: data.embedUrl,
+                        submitted_by: data.submittedBy || 'Anonymous',
+                        likes: data.likes || 0,
+                        created_at: data.timestamp?.toDate() || new Date()
+                    }, { onConflict: 'id' });
+                    trackCount++;
+                }
+                log(`✅ Migrated ${trackCount} tracks`);
+
+                // Migrate Messages
+                log('\n📦 Migrating messages...');
+                const messagesSnap = await getDocs(collection(firestore, 'messages'));
+                let msgCount = 0;
+                for (const doc of messagesSnap.docs) {
+                    const data = doc.data();
+                    await supabase.from('messages').upsert({
+                        id: doc.id,
+                        user_id: data.userId || null,
+                        username: data.username,
+                        message: data.message,
+                        is_admin: data.isAdmin || false,
+                        photo_url: data.photoURL || null,
+                        created_at: data.timestamp?.toDate() || new Date()
+                    }, { onConflict: 'id' });
+                    msgCount++;
+                }
+                log(`✅ Migrated ${msgCount} messages`);
+
+                // Migrate Comments
+                log('\n📦 Migrating comments...');
+                let commentCount = 0;
+                for (const trackDoc of tracksSnap.docs) {
+                    const commentsSnap = await getDocs(collection(firestore, `tracks/${trackDoc.id}/comments`));
+                    for (const commentDoc of commentsSnap.docs) {
+                        const data = commentDoc.data();
+                        await supabase.from('comments').insert({
+                            track_id: trackDoc.id,
+                            user_id: data.userId || null,
+                            username: data.username,
+                            text: data.text,
+                            created_at: data.timestamp?.toDate() || new Date()
+                        });
+                        commentCount++;
+                    }
+                }
+                log(`✅ Migrated ${commentCount} comments`);
+
+                log('\n🎉 Migration completed successfully!');
+                log(`\nSummary:`);
+                log(`- Users: ${userCount}`);
+                log(`- Tracks: ${trackCount}`);
+                log(`- Messages: ${msgCount}`);
+                log(`- Comments: ${commentCount}`);
+
+            } catch (error) {
+                log(`\n❌ Error: ${error.message}`);
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
