@@ -97,7 +97,12 @@
 
         const supabase = createClient(
             'https://mcologfwjggmmsihtrrq.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jb2xvZ2Z3amdnbW1zaWh0cnJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDE3NjgsImV4cCI6MjA3NTExNzc2OH0.oBdDaOprgrR_elipZYDyVkilxWeW6mECWgtugnenm68'
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jb2xvZ2Z3amdnbW1zaWh0cnJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDE3NjgsImV4cCI6MjA3NTExNzc2OH0.oBdDaOprgrR_elipZYDyVkilxWeW6mECWgtugnenm68',
+            {
+                auth: {
+                    redirectTo: 'https://narfbach.github.io/fran-music-cave/index-supabase.html'
+                }
+            }
         )
 
         window.handleLogin = async () => {
@@ -148,7 +153,7 @@
                     tracks_submitted: 0
                 })
 
-                alert('Account created! Please check your email to confirm.')
+                alert('Account created successfully! You can now login.')
                 showLogin()
             } catch (error) {
                 alert('Error: ' + error.message)
