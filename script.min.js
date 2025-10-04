@@ -438,6 +438,20 @@ function setupInteractions(card, trackId) {
                             diggerScore: currentScore + 1 // +1 point per like
                         });
                     }
+
+                    // Create notification for track owner (if not liking own track)
+                    if (trackOwnerId !== window.currentUser.uid) {
+                        await window.chatAddDoc(window.chatCollection(window.chatDb, 'notifications'), {
+                            userId: trackOwnerId,
+                            type: 'like',
+                            trackId: trackId,
+                            trackTitle: trackData.title,
+                            fromUserId: window.currentUser.uid,
+                            fromUsername: window.currentUser.displayName || 'Someone',
+                            read: false,
+                            timestamp: window.chatServerTimestamp()
+                        });
+                    }
                 }
 
                 // Actualizar UI inmediatamente
@@ -488,7 +502,7 @@ async function sendComment(trackId, input) {
 
     if (!window.chatDb) return;
 
-    const username = localStorage.getItem('chatUsername') || 'Anonymous';
+    const username = window.currentUser.displayName || 'Anonymous';
 
     try {
         await window.chatAddDoc(window.chatCollection(window.chatDb, `tracks/${trackId}/comments`), {
@@ -496,6 +510,30 @@ async function sendComment(trackId, input) {
             text: text,
             timestamp: window.chatServerTimestamp()
         });
+
+        // Get track data to send notification to owner
+        const trackRef = window.chatDoc(window.chatDb, 'tracks', trackId);
+        const trackDoc = await window.chatGetDoc(trackRef);
+
+        if (trackDoc.exists()) {
+            const trackData = trackDoc.data();
+            const trackOwnerId = trackData.userId;
+
+            // Create notification for track owner (if not commenting on own track)
+            if (trackOwnerId && trackOwnerId !== window.currentUser.uid) {
+                await window.chatAddDoc(window.chatCollection(window.chatDb, 'notifications'), {
+                    userId: trackOwnerId,
+                    type: 'comment',
+                    trackId: trackId,
+                    trackTitle: trackData.title,
+                    fromUserId: window.currentUser.uid,
+                    fromUsername: window.currentUser.displayName || 'Someone',
+                    commentText: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+                    read: false,
+                    timestamp: window.chatServerTimestamp()
+                });
+            }
+        }
 
         input.value = '';
         loadComments(trackId);
