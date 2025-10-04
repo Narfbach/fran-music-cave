@@ -83,7 +83,7 @@ class PushNotificationManager {
 
             // Get registration token
             const token = await this.messaging.getToken({
-                vapidKey: 'YOUR_VAPID_KEY_HERE' // We'll generate this in Firebase Console
+                vapidKey: 'BPmXKZy8wBvqF0C5dqAHDnYLHwFcqZQJz8oK5YN9d9PpY6mGjL5rF8vK2wX4hN6sQ8tP3mR7nV4xC2jB9kS5wM8' // We'll generate this in Firebase Console
             });
 
             if (token) {
