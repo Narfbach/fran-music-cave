@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Specific User - The Music Cave</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #999;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #999;
+            letter-spacing: 3px;
+            margin-bottom: 2rem;
+        }
+        button {
+            background: transparent;
+            border: 1px solid #333;
+            color: #999;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+        }
+        button:hover {
+            border-color: #666;
+            color: #fff;
+        }
+        #log {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            padding: 1rem;
+            margin-top: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FIX SPECIFIC USER</h1>
+        <p>This will update the username for joakola87@gmail.com to "Joako"</p>
+        <button onclick="fixUser()">FIX USER</button>
+        <div id="log"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa5zahCZE7Gsh0JAkC1iimWutpBddRF1s",
+            authDomain: "fran-music-cave.firebaseapp.com",
+            projectId: "fran-music-cave",
+            storageBucket: "fran-music-cave.firebasestorage.app",
+            messagingSenderId: "518773964413",
+            appId: "1:518773964413:web:46f3b94fb6db076c323b14",
+            measurementId: "G-3NN8Q90FX8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.collection = collection;
+        window.query = query;
+        window.where = where;
+        window.getDocs = getDocs;
+        window.updateDoc = updateDoc;
+        window.doc = doc;
+    </script>
+
+    <script>
+        function log(message, type = 'normal') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function fixUser() {
+            log('Starting user fix process...');
+
+            try {
+                // Query for user with email joakola87@gmail.com
+                const usersRef = window.collection(window.db, 'users');
+                const q = window.query(usersRef, window.where('email', '==', 'joakola87@gmail.com'));
+
+                log('Searching for user with email: joakola87@gmail.com');
+                const querySnapshot = await window.getDocs(q);
+
+                if (querySnapshot.empty) {
+                    log('User not found!', 'error');
+                    return;
+                }
+
+                querySnapshot.forEach(async (userDoc) => {
+                    const userData = userDoc.data();
+                    log(`Found user: ${userDoc.id}`);
+                    log(`Current username: ${userData.username}`);
+                    log(`Current email: ${userData.email}`);
+
+                    // Update username to "Joako"
+                    const userRef = window.doc(window.db, 'users', userDoc.id);
+                    await window.updateDoc(userRef, {
+                        username: 'Joako'
+                    });
+
+                    log('Username updated to: Joako', 'success');
+                    log('✓ User fixed successfully!', 'success');
+                });
+
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
