@@ -168,7 +168,16 @@
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    const username = userData.username || user.displayName || 'Anonymous';
+                    // Get username, fallback to displayName, then email without @domain
+                    let username = userData.username || user.displayName;
+
+                    // If username is an email, extract the part before @
+                    if (username && username.includes('@')) {
+                        username = username.split('@')[0];
+                    }
+
+                    if (!username) username = 'Anonymous';
+
                     document.getElementById('profileUsername').textContent = username;
 
                     // Load custom photo if exists, otherwise show vinyl record
@@ -272,7 +281,19 @@
                 }
 
                 const userData = userDoc.data();
-                const username = userData.username || userData.email?.split('@')[0] || 'Anonymous';
+                // Get username, fallback to email part before @
+                let username = userData.username;
+
+                // If no username or username is an email, extract part before @
+                if (!username || username.includes('@')) {
+                    if (userData.email) {
+                        username = userData.email.split('@')[0];
+                    } else if (username && username.includes('@')) {
+                        username = username.split('@')[0];
+                    } else {
+                        username = 'Anonymous';
+                    }
+                }
 
                 document.getElementById('profileUsername').textContent = username;
 

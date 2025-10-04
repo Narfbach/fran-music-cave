@@ -55,7 +55,13 @@ async function setupChatUser(user) {
         const userDoc = await window.chatGetDoc(window.chatDoc(window.chatDb, 'users', user.uid));
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            const username = user.displayName || user.email.split('@')[0];
+            // Get username from Firestore, fallback to displayName, then email
+            let username = userData.username || user.displayName || user.email?.split('@')[0] || 'Anonymous';
+
+            // If username is an email, extract part before @
+            if (username.includes('@')) {
+                username = username.split('@')[0];
+            }
 
             // Store user data for chat
             currentChatUser = {
