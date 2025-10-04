@@ -22,13 +22,12 @@ function initNotifications(user) {
 
     console.log('Notifications: Creating query...');
 
-    // Listen for notifications
+    // Listen for notifications - simplified query without orderBy to avoid index requirement
     const notificationsRef = window.chatCollection(window.chatDb, 'notifications');
     const q = window.chatQuery(
         notificationsRef,
         window.chatWhere('userId', '==', user.uid),
-        window.chatOrderBy('timestamp', 'desc'),
-        window.chatLimit(20)
+        window.chatLimit(50)
     );
 
     console.log('Notifications: Query created, setting up listener...');
@@ -44,6 +43,15 @@ function initNotifications(user) {
             notifications.push(notif);
             if (!notif.read) unreadCount++;
         });
+
+        // Sort notifications by timestamp (newest first) on client side
+        notifications.sort((a, b) => {
+            if (!a.timestamp || !b.timestamp) return 0;
+            return b.timestamp.toMillis() - a.timestamp.toMillis();
+        });
+
+        // Keep only last 20
+        notifications.splice(20);
 
         console.log('Notifications: Unread count:', unreadCount);
 
