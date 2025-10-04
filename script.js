@@ -441,6 +441,7 @@ function setupInteractions(card, trackId) {
 
                     // Create notification for track owner (if not liking own track)
                     if (trackOwnerId !== window.currentUser.uid) {
+                        console.log('Creating like notification for user:', trackOwnerId);
                         await window.chatAddDoc(window.chatCollection(window.chatDb, 'notifications'), {
                             userId: trackOwnerId,
                             type: 'like',
@@ -451,6 +452,9 @@ function setupInteractions(card, trackId) {
                             read: false,
                             timestamp: window.chatServerTimestamp()
                         });
+                        console.log('Like notification created successfully');
+                    } else {
+                        console.log('Not creating notification - user liked own track');
                     }
                 }
 
@@ -521,6 +525,7 @@ async function sendComment(trackId, input) {
 
             // Create notification for track owner (if not commenting on own track)
             if (trackOwnerId && trackOwnerId !== window.currentUser.uid) {
+                console.log('Creating comment notification for user:', trackOwnerId);
                 await window.chatAddDoc(window.chatCollection(window.chatDb, 'notifications'), {
                     userId: trackOwnerId,
                     type: 'comment',
@@ -532,6 +537,9 @@ async function sendComment(trackId, input) {
                     read: false,
                     timestamp: window.chatServerTimestamp()
                 });
+                console.log('Comment notification created successfully');
+            } else {
+                console.log('Not creating notification - user commented on own track or no trackOwnerId');
             }
         }
 

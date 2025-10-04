@@ -3,11 +3,24 @@ let notificationsListener = null;
 
 // Initialize notifications when user logs in
 function initNotifications(user) {
-    if (!user || !window.chatDb) return;
+    if (!user || !window.chatDb) {
+        console.log('Notifications: Waiting for user or Firebase...', { user: !!user, db: !!window.chatDb });
+        return;
+    }
+
+    console.log('Notifications: Initializing for user', user.uid);
 
     // Show notification button
     const notifBtn = document.getElementById('notificationsBtn');
     if (notifBtn) notifBtn.style.display = 'block';
+
+    // Check if where is available
+    if (!window.chatWhere) {
+        console.error('Notifications: chatWhere is not available!');
+        return;
+    }
+
+    console.log('Notifications: Creating query...');
 
     // Listen for notifications
     const notificationsRef = window.chatCollection(window.chatDb, 'notifications');
@@ -18,7 +31,11 @@ function initNotifications(user) {
         window.chatLimit(20)
     );
 
+    console.log('Notifications: Query created, setting up listener...');
+
     notificationsListener = window.chatOnSnapshot(q, (snapshot) => {
+        console.log('Notifications: Snapshot received, count:', snapshot.size);
+
         const notifications = [];
         let unreadCount = 0;
 
@@ -27,6 +44,8 @@ function initNotifications(user) {
             notifications.push(notif);
             if (!notif.read) unreadCount++;
         });
+
+        console.log('Notifications: Unread count:', unreadCount);
 
         // Update badge
         const badge = document.getElementById('notifBadge');
@@ -40,6 +59,8 @@ function initNotifications(user) {
         // Update notifications list
         renderNotifications(notifications);
     });
+
+    console.log('Notifications: Listener set up successfully');
 }
 
 // Render notifications in panel
